@@ -8,19 +8,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Roboto',sans-serif;background:#f4fafa;color:#4d4d4d;min-height:100vh;font-size:13px}
+body{font-family:'Roboto',sans-serif;background:#f4fafa;color:#4d4d4d;min-height:100vh;font-size:13px;display:flex;flex-direction:column}
 a{text-decoration:none;color:inherit}
 
 /* HEADER */
 .hdr{background:#ffffff;border-bottom:1px solid #d4eeee;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;box-shadow:0 2px 6px rgba(5,139,138,.07)}
 .hdr-l{display:flex;align-items:center;gap:12px}
-.logo-bar{width:4px;height:30px;background:#058b8a;border-radius:3px}
+.logo-bar{width:4px;height:30px;background:#058b8a;border-radius:3px;flex-shrink:0}
 .logo-txt{font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
 .logo-txt span{color:#058b8a}
 .logo-sub{font-size:10px;color:#999999;letter-spacing:.4px;margin-top:1px}
 .hdr-r{display:flex;align-items:center;gap:10px}
 .upd{font-size:11px;color:#999999;background:#e6f7f7;border:1px solid #d4eeee;border-radius:20px;padding:4px 12px}
-.sheet-btn{font-size:11px;font-weight:500;color:#058b8a;background:#e6f7f7;border:1px solid #058b8a;border-radius:35px;padding:6px 16px;transition:all .15s;cursor:pointer}
+.sheet-btn{font-size:11px;font-weight:500;color:#058b8a;background:#e6f7f7;border:1px solid #058b8a;border-radius:35px;padding:6px 16px;transition:all .15s;cursor:pointer;display:inline-block}
 .sheet-btn:hover{background:#058b8a;color:#ffffff}
 
 /* STATS */
@@ -30,59 +30,64 @@ a{text-decoration:none;color:inherit}
 .sn{font-family:'Poppins',sans-serif;font-size:19px;font-weight:700;line-height:1}
 .sl{font-size:10px;color:#999999;margin-top:2px;font-weight:500}
 
-/* CONTROLS BAR */
-.ctrl{background:#ffffff;border-bottom:1px solid #d4eeee;padding:10px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+/* CONTROLS */
+.ctrl{background:#ffffff;border-bottom:1px solid #d4eeee;padding:10px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .view-toggle{display:flex;background:#f4fafa;border:1px solid #d4eeee;border-radius:35px;padding:3px;gap:2px}
 .vbtn{font-family:'Roboto',sans-serif;font-size:12px;font-weight:500;padding:5px 18px;border-radius:35px;background:transparent;border:none;color:#646464;cursor:pointer;transition:all .15s}
 .vbtn.active{background:#058b8a;color:#ffffff;font-weight:700;box-shadow:0 2px 6px rgba(5,139,138,.3)}
 .period-nav{display:flex;align-items:center;gap:10px}
-.nav-arr{background:#e6f7f7;border:1px solid #d4eeee;color:#058b8a;border-radius:35px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s;user-select:none}
+.nav-arr{background:#e6f7f7;border:1px solid #d4eeee;color:#058b8a;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s;user-select:none;flex-shrink:0}
 .nav-arr:hover{background:#058b8a;color:#ffffff}
-.period-lbl{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:#4d4d4d;min-width:220px;text-align:center}
+.plbl{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:#4d4d4d;min-width:220px;text-align:center}
 
 /* FILTERS */
 .frow{background:#ffffff;border-bottom:1px solid #d4eeee;padding:9px 32px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .flbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#999999;white-space:nowrap}
-.filter-btn{font-family:'Roboto',sans-serif;font-size:11px;font-weight:500;padding:5px 14px;border-radius:35px;background:#f4fafa;border:1px solid #d4eeee;color:#646464;cursor:pointer;transition:all .15s}
+.filter-btn{font-family:'Roboto',sans-serif;font-size:11px;font-weight:500;padding:5px 13px;border-radius:35px;background:#f4fafa;border:1px solid #d4eeee;color:#646464;cursor:pointer;transition:all .15s}
 .filter-btn:hover{border-color:#058b8a;color:#058b8a}
 .filter-btn.active{background:#058b8a;border-color:#058b8a;color:#ffffff;font-weight:700}
-.fdiv{width:1px;height:18px;background:#d4eeee;margin:0 3px}
-.sub-frow{background:#fafefe;border-bottom:1px solid #e8f5f5;padding:7px 32px;display:none;align-items:center;gap:7px;flex-wrap:wrap}
+.fdiv{width:1px;height:18px;background:#d4eeee;margin:0 3px;flex-shrink:0}
+.sub-frow{background:#fafefe;border-bottom:1px solid #eaf5f5;padding:7px 32px;display:none;align-items:center;gap:7px;flex-wrap:wrap}
 
-/* CONTENT AREA */
-.content{padding:22px 32px}
+/* MAIN CONTENT */
+.main{flex:1;padding:20px 32px}
 
 /* WEEK GRID */
-.drow{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;min-height:380px}
+.drow{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;min-height:360px}
 .dcol{background:#ffffff;border:1px solid #d4eeee;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 12px rgba(5,139,138,.08);transition:box-shadow .2s}
-.dcol:hover{box-shadow:0 6px 20px rgba(5,139,138,.16)}
+.dcol:hover{box-shadow:0 6px 22px rgba(5,139,138,.16)}
 .dcol.today{border-color:#058b8a;box-shadow:0 0 0 2px #e6f7f7,0 2px 12px rgba(5,139,138,.08)}
 .dcol.past{opacity:.82}
-.dhdr{padding:9px 11px 7px;display:flex;align-items:center;justify-content:space-between;background:#dcf5f0;border-bottom:1px solid #d4eeee}
+.dhdr{padding:9px 11px 7px;display:flex;align-items:center;justify-content:space-between;background:#dcf5f0;border-bottom:1px solid #d4eeee;cursor:pointer;transition:background .15s;user-select:none}
+.dhdr:hover{background:#c8ede9}
 .today .dhdr{background:#058b8a}
+.today .dhdr:hover{background:#046b6a}
 .dname{font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#646464}
 .today .dname{color:#ffffff}
+.dopen{font-size:14px;color:#999999;line-height:1;margin-left:2px}
+.today .dopen{color:rgba(255,255,255,.6)}
+.dhdr:hover .dopen{color:#058b8a}
+.today .dhdr:hover .dopen{color:#ffffff}
 .dcnt{background:#058b8a;color:#ffffff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 7px}
 .today .dcnt{background:#ffffff;color:#058b8a}
 .dbody{display:flex;flex-direction:column;gap:7px;padding:8px;flex:1}
 .eday{flex:1;display:flex;align-items:center;justify-content:center;color:#999999;font-size:11px;border:1.5px dashed #d4eeee;border-radius:9px;padding:16px 0;margin:2px 0}
 
 /* WEEK CARD */
-.card{background:#f4fafa;border:1px solid #d4eeee;border-radius:10px;padding:9px 10px;transition:all .15s;cursor:default}
-.card:hover{box-shadow:0 6px 20px rgba(5,139,138,.16);transform:translateY(-1px);background:#ffffff;border-color:#058b8a33}
+.card{background:#f4fafa;border:1px solid #d4eeee;border-radius:10px;padding:9px 10px;transition:all .15s}
+.card:hover{box-shadow:0 6px 22px rgba(5,139,138,.16);transform:translateY(-1px);background:#ffffff;border-color:#058b8a33}
 .ct{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
 .ctitle{font-size:12px;font-weight:500;color:#4d4d4d;line-height:1.4;margin-bottom:6px}
-.cl{color:#4d4d4d}
-.cl:hover{color:#058b8a}
+.cl{color:#4d4d4d} .cl:hover{color:#058b8a}
 .arr{font-size:10px;color:#058b8a;margin-left:2px}
 .cmeta{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
 .mi{font-size:10px;color:#999999;background:#ffffff;border:1px solid #d4eeee;border-radius:20px;padding:1px 7px}
 .resp{color:#646464;font-weight:500}
-.cplats{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
-.pdot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:13px;cursor:default;transition:transform .15s,box-shadow .15s;flex-shrink:0}
+.cplats{display:flex;flex-wrap:wrap;gap:5px}
+.pdot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:13px;cursor:default;transition:transform .15s,box-shadow .15s}
 .pdot:hover{transform:scale(1.18);box-shadow:0 2px 8px rgba(0,0,0,.12)}
 
-/* BADGE */
+/* BADGES */
 .badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;border-radius:20px;padding:2px 8px;white-space:nowrap}
 .tipo-b{font-weight:700}
 .estado-b{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;white-space:nowrap}
@@ -92,24 +97,37 @@ a{text-decoration:none;color:inherit}
 .mhdr-row{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
 .mhdr{text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#999999;padding:5px 0}
 .mcells{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-.mcell{background:#ffffff;border:1px solid #d4eeee;border-radius:10px;padding:7px 8px;min-height:90px;transition:box-shadow .15s}
-.mcell:hover{box-shadow:0 6px 20px rgba(5,139,138,.16)}
+.mcell{background:#ffffff;border:1px solid #d4eeee;border-radius:10px;padding:7px 8px;min-height:88px;transition:all .15s;cursor:pointer}
+.mcell:hover{box-shadow:0 6px 22px rgba(5,139,138,.16);border-color:#058b8a55}
 .mcell.out{background:#f9fbfb;opacity:.55}
 .mcell.mtoday{border-color:#058b8a;box-shadow:0 0 0 2px #e6f7f7}
 .mdn{font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;color:#646464;margin-bottom:5px}
 .today-dn{background:#058b8a;color:#ffffff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px}
 .mcitems{display:flex;flex-direction:column;gap:3px}
-
-/* MINI CARD */
-.mini{cursor:default}
+.mini{cursor:pointer}
 .mchip{font-size:10px;font-weight:500;padding:3px 7px;border-radius:5px;display:flex;align-items:center;justify-content:space-between;gap:5px;transition:opacity .1s;line-height:1.3}
 .mchip:hover{opacity:.8}
-.mchip-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-.mchip-plats{display:flex;gap:2px;flex-shrink:0}
+.mctxt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.mcplats{display:flex;gap:2px;flex-shrink:0}
 .mpdot{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;font-size:9px}
 
+/* DAY VIEW MODAL */
+.overlay{position:fixed;inset:0;background:rgba(4,40,40,.45);z-index:200;animation:fadein .18s;display:none}
+.daymodal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;max-width:94vw;max-height:84vh;background:#ffffff;border-radius:18px;overflow:hidden;display:none;flex-direction:column;z-index:201;box-shadow:0 24px 64px rgba(0,0,0,.22);animation:scalein .18s}
+.dm-hdr{background:#058b8a;color:#ffffff;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.dm-date{font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;text-transform:capitalize;line-height:1.2}
+.dm-sub{font-size:11px;opacity:.75;margin-top:3px}
+.dm-close{background:rgba(255,255,255,.18);border:none;color:#ffffff;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:16px;font-family:'Roboto',sans-serif;transition:background .15s;flex-shrink:0}
+.dm-close:hover{background:rgba(255,255,255,.32)}
+.dm-body{padding:16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px}
+.dm-empty{text-align:center;color:#999999;padding:44px 16px}
+.dm-empty div{font-size:32px;margin-bottom:10px}
+.dm-empty p{font-size:13px;color:#646464}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes scalein{from{opacity:0;transform:translate(-50%,-52%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+
 /* FOOTER */
-.footer{background:#058b8a;color:#ffffff;text-align:center;padding:16px 32px;font-size:11px}
+.footer{background:#058b8a;color:#ffffff;text-align:center;padding:16px 32px;font-size:11px;flex-shrink:0}
 .footer a{color:#a9d7d7}
 .footer a:hover{color:#ffffff}
 
@@ -118,11 +136,12 @@ a{text-decoration:none;color:inherit}
 @media(max-width:750px){
   .drow{grid-template-columns:repeat(2,1fr)}
   .mcells{grid-template-columns:repeat(4,1fr)}
-  .hdr,.stats,.ctrl,.frow,.sub-frow,.content{padding-left:14px;padding-right:14px}
+  .hdr,.stats,.ctrl,.frow,.sub-frow,.main{padding-left:14px;padding-right:14px}
 }
 @media(max-width:480px){
   .drow{grid-template-columns:1fr}
   .mcells{grid-template-columns:repeat(2,1fr)}
+  .daymodal{width:98vw}
 }
 </style>
 </head>
@@ -138,7 +157,7 @@ a{text-decoration:none;color:inherit}
     </div>
   </div>
   <div class="hdr-r">
-    <span class="upd">Actualizado: 30/04/2026 18:05</span>
+    <span class="upd">Actualizado: 30/04/2026 18:13</span>
     <a href="https://docs.google.com/spreadsheets/d/1tp1MRjJU6g6vF5VD78k-xbV6tcSM5XVZb_FQe9HIdIs/edit#gid=1371647617"
        target="_blank" class="sheet-btn">📋 Abrir Sheet</a>
   </div>
@@ -164,21 +183,21 @@ a{text-decoration:none;color:inherit}
   </div>
 </div>
 
-<!-- CONTROLS -->
+<!-- CONTROLS: view + period nav -->
 <div class="ctrl">
   <div class="view-toggle">
-    <button class="vbtn active" id="btn-week" onclick="setView('week')">📅 Semana</button>
+    <button class="vbtn active" id="btn-week"  onclick="setView('week')">📅 Semana</button>
     <button class="vbtn"        id="btn-month" onclick="setView('month')">🗓 Mes</button>
   </div>
   <div class="period-nav">
     <div class="nav-arr" onclick="prevPeriod()">←</div>
-    <div class="period-lbl" id="plbl"></div>
+    <div class="plbl" id="plbl"></div>
     <div class="nav-arr" onclick="nextPeriod()">→</div>
   </div>
-  <div style="width:120px"></div>
+  <div style="width:140px"></div>
 </div>
 
-<!-- FILTERS ROW 1: tipo -->
+<!-- FILTERS ROW 1: tipo + estado -->
 <div class="frow">
   <span class="flbl">Contenido:</span>
   <button class="filter-btn active" data-ft onclick="filterTipo('all',this)">Todos</button>
@@ -187,19 +206,25 @@ a{text-decoration:none;color:inherit}
   <button class="filter-btn" data-ft onclick="filterTipo('publicacion',this)">📱 Publicación</button>
   <button class="filter-btn" data-ft onclick="filterTipo('email',this)">✉ Email</button>
   <button class="filter-btn" data-ft onclick="filterTipo('evento',this)">📅 Evento</button>
+  <div class="fdiv"></div>
+  <span class="flbl">Estado:</span>
+  <button class="filter-btn active" data-fe onclick="filterEstado('all',this)">Todos</button>
+  <button class="filter-btn" data-fe onclick="filterEstado('Publicado',this)">✓ Publicado</button>
+  <button class="filter-btn" data-fe onclick="filterEstado('Programado',this)">⏱ Programado</button>
+  <button class="filter-btn" data-fe onclick="filterEstado('En Producción',this)">⚙ En Producción</button>
+  <button class="filter-btn" data-fe onclick="filterEstado('Borrador',this)">◻ Borrador</button>
+  <button class="filter-btn" data-fe onclick="filterEstado('Idea',this)">💡 Idea</button>
 </div>
 
 <!-- FILTERS ROW 2: plataforma (condicional) -->
 <div class="sub-frow" id="platrow">
   <span class="flbl">Plataforma:</span>
-  <!-- video platforms -->
   <div id="vp" style="display:none;gap:6px;flex-wrap:wrap;align-items:center">
     <button class="filter-btn active" data-fp onclick="filterPlat('all',this)">Todas</button>
     <button class="filter-btn" data-fp onclick="filterPlat('Instagram',this)">📸 Instagram</button>
 <button class="filter-btn" data-fp onclick="filterPlat('TikTok',this)">🎵 TikTok</button>
 <button class="filter-btn" data-fp onclick="filterPlat('YouTube Shorts',this)">⚡ YouTube Shorts</button>
   </div>
-  <!-- publicacion platforms -->
   <div id="pp" style="display:none;gap:6px;flex-wrap:wrap;align-items:center">
     <button class="filter-btn active" data-fp onclick="filterPlat('all',this)">Todas</button>
     <button class="filter-btn" data-fp onclick="filterPlat('Instagram',this)">📸 Instagram</button>
@@ -209,16 +234,23 @@ a{text-decoration:none;color:inherit}
   </div>
 </div>
 
-<!-- CONTENT -->
-<div class="content">
-  <!-- week view -->
-  <div id="vw">
-    <div class="week-grid" id="wk-0" style="display:none"><div class="drow"><div class="dcol past"><div class="dhdr"><span class="dname">Lun 27</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr"><span class="dname">Mar 28</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr"><span class="dname">Mié 29</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol today"><div class="dhdr"><span class="dname">Jue 30</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr"><span class="dname">Vie 1</span><span class="dcnt">1</span></div><div class="dbody"><div class="card" data-cat="video" data-plats="Instagram, TikTok, YouTube Shorts" data-estado="Programado"><div class="ct"><span class="badge tipo-b" style="color:#412f86;background:#ece8f9">Video Corto</span><span class="estado-b" style="color:#412f86;background:#ece8f9"><i style="background:#412f86"></i>Programado</span></div><div class="ctitle"><span class="cl">¿Cuántos WhatsApp usa tu empresa para atender clientes? — 3 beneficios de centralizar</span></div><div class="cmeta"><span class="mi">🕐 12:00 CLT</span><span class="mi resp">Sebastián</span></div><div class="cplats"><span class="pdot" title="Instagram" style="background:#fce8f1;border:1.5px solid #e1306c33">📸</span><span class="pdot" title="TikTok" style="background:#ffe5ee;border:1.5px solid #ff005033">🎵</span><span class="pdot" title="YouTube Shorts" style="background:#ffe5e5;border:1.5px solid #cc000033">⚡</span></div></div></div></div><div class="dcol"><div class="dhdr"><span class="dname">Sáb 2</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr"><span class="dname">Dom 3</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div></div></div>
+<!-- MAIN CONTENT -->
+<div class="main">
+  <div id="vw"><div class="week-grid" id="wk-0" style="display:none"><div class="drow"><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-13')" title="Ver Lun 13"><span class="dname">Lun 13</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-14')" title="Ver Mar 14"><span class="dname">Mar 14</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-15')" title="Ver Mié 15"><span class="dname">Mié 15</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-16')" title="Ver Jue 16"><span class="dname">Jue 16</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-17')" title="Ver Vie 17"><span class="dname">Vie 17</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-18')" title="Ver Sáb 18"><span class="dname">Sáb 18</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-19')" title="Ver Dom 19"><span class="dname">Dom 19</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div></div></div><div class="week-grid" id="wk-1" style="display:none"><div class="drow"><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-20')" title="Ver Lun 20"><span class="dname">Lun 20</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-21')" title="Ver Mar 21"><span class="dname">Mar 21</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-22')" title="Ver Mié 22"><span class="dname">Mié 22</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-23')" title="Ver Jue 23"><span class="dname">Jue 23</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-24')" title="Ver Vie 24"><span class="dname">Vie 24</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-25')" title="Ver Sáb 25"><span class="dname">Sáb 25</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-26')" title="Ver Dom 26"><span class="dname">Dom 26</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div></div></div><div class="week-grid" id="wk-2" style="display:none"><div class="drow"><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-27')" title="Ver Lun 27"><span class="dname">Lun 27</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-28')" title="Ver Mar 28"><span class="dname">Mar 28</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr" onclick="openDay('2026-04-29')" title="Ver Mié 29"><span class="dname">Mié 29</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol today"><div class="dhdr" onclick="openDay('2026-04-30')" title="Ver Jue 30"><span class="dname">Jue 30</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-01')" title="Ver Vie 1"><span class="dname">Vie 1</span><span class="dcnt">1</span><span class="dopen">+</span></div><div class="dbody"><div class="card" data-cat="video" data-plats="Instagram, TikTok, YouTube Shorts" data-estado="Programado"><div class="ct"><span class="badge tipo-b" style="color:#412f86;background:#ece8f9">Video Corto</span><span class="estado-b" style="color:#412f86;background:#ece8f9"><i style="background:#412f86"></i>Programado</span></div><div class="ctitle"><span class="cl">¿Cuántos WhatsApp usa tu empresa para atender clientes? — 3 beneficios de centralizar</span></div><div class="cmeta"><span class="mi">🕐 12:00 CLT</span><span class="mi resp">Sebastián</span></div><div class="cplats"><span class="pdot" title="Instagram" style="background:#fce8f1;border:1.5px solid #e1306c33">📸</span><span class="pdot" title="TikTok" style="background:#ffe5ee;border:1.5px solid #ff005033">🎵</span><span class="pdot" title="YouTube Shorts" style="background:#ffe5e5;border:1.5px solid #cc000033">⚡</span></div></div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-02')" title="Ver Sáb 2"><span class="dname">Sáb 2</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-03')" title="Ver Dom 3"><span class="dname">Dom 3</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div></div></div><div class="week-grid" id="wk-3" style="display:none"><div class="drow"><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-04')" title="Ver Lun 4"><span class="dname">Lun 4</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-05')" title="Ver Mar 5"><span class="dname">Mar 5</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-06')" title="Ver Mié 6"><span class="dname">Mié 6</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-07')" title="Ver Jue 7"><span class="dname">Jue 7</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-08')" title="Ver Vie 8"><span class="dname">Vie 8</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-09')" title="Ver Sáb 9"><span class="dname">Sáb 9</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-10')" title="Ver Dom 10"><span class="dname">Dom 10</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div></div></div><div class="week-grid" id="wk-4" style="display:none"><div class="drow"><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-11')" title="Ver Lun 11"><span class="dname">Lun 11</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-12')" title="Ver Mar 12"><span class="dname">Mar 12</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-13')" title="Ver Mié 13"><span class="dname">Mié 13</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-14')" title="Ver Jue 14"><span class="dname">Jue 14</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-15')" title="Ver Vie 15"><span class="dname">Vie 15</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-16')" title="Ver Sáb 16"><span class="dname">Sáb 16</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-17')" title="Ver Dom 17"><span class="dname">Dom 17</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div></div></div><div class="week-grid" id="wk-5" style="display:none"><div class="drow"><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-18')" title="Ver Lun 18"><span class="dname">Lun 18</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-19')" title="Ver Mar 19"><span class="dname">Mar 19</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-20')" title="Ver Mié 20"><span class="dname">Mié 20</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-21')" title="Ver Jue 21"><span class="dname">Jue 21</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-22')" title="Ver Vie 22"><span class="dname">Vie 22</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-23')" title="Ver Sáb 23"><span class="dname">Sáb 23</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-24')" title="Ver Dom 24"><span class="dname">Dom 24</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div></div></div><div class="week-grid" id="wk-6" style="display:none"><div class="drow"><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-25')" title="Ver Lun 25"><span class="dname">Lun 25</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-26')" title="Ver Mar 26"><span class="dname">Mar 26</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-27')" title="Ver Mié 27"><span class="dname">Mié 27</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-28')" title="Ver Jue 28"><span class="dname">Jue 28</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-29')" title="Ver Vie 29"><span class="dname">Vie 29</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-30')" title="Ver Sáb 30"><span class="dname">Sáb 30</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr" onclick="openDay('2026-05-31')" title="Ver Dom 31"><span class="dname">Dom 31</span><span class="dopen">+</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div></div></div></div>
+  <div id="vm" style="display:none"><div class="month-grid" id="mo-0" style="display:none"><div class="mhdr-row"><div class="mhdr">Lun</div><div class="mhdr">Mar</div><div class="mhdr">Mié</div><div class="mhdr">Jue</div><div class="mhdr">Vie</div><div class="mhdr">Sáb</div><div class="mhdr">Dom</div></div><div class="mcells"><div class="mcell out" onclick="openDay('2026-02-23')" title="Ver 23/2"><div class="mdn">23</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-02-24')" title="Ver 24/2"><div class="mdn">24</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-02-25')" title="Ver 25/2"><div class="mdn">25</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-02-26')" title="Ver 26/2"><div class="mdn">26</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-02-27')" title="Ver 27/2"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-02-28')" title="Ver 28/2"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-01')" title="Ver 1/3"><div class="mdn">1</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-02')" title="Ver 2/3"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-03')" title="Ver 3/3"><div class="mdn">3</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-04')" title="Ver 4/3"><div class="mdn">4</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-05')" title="Ver 5/3"><div class="mdn">5</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-06')" title="Ver 6/3"><div class="mdn">6</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-07')" title="Ver 7/3"><div class="mdn">7</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-08')" title="Ver 8/3"><div class="mdn">8</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-09')" title="Ver 9/3"><div class="mdn">9</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-10')" title="Ver 10/3"><div class="mdn">10</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-11')" title="Ver 11/3"><div class="mdn">11</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-12')" title="Ver 12/3"><div class="mdn">12</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-13')" title="Ver 13/3"><div class="mdn">13</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-14')" title="Ver 14/3"><div class="mdn">14</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-15')" title="Ver 15/3"><div class="mdn">15</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-16')" title="Ver 16/3"><div class="mdn">16</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-17')" title="Ver 17/3"><div class="mdn">17</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-18')" title="Ver 18/3"><div class="mdn">18</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-19')" title="Ver 19/3"><div class="mdn">19</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-20')" title="Ver 20/3"><div class="mdn">20</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-21')" title="Ver 21/3"><div class="mdn">21</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-22')" title="Ver 22/3"><div class="mdn">22</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-23')" title="Ver 23/3"><div class="mdn">23</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-24')" title="Ver 24/3"><div class="mdn">24</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-25')" title="Ver 25/3"><div class="mdn">25</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-26')" title="Ver 26/3"><div class="mdn">26</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-27')" title="Ver 27/3"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-28')" title="Ver 28/3"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-29')" title="Ver 29/3"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-30')" title="Ver 30/3"><div class="mdn">30</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-03-31')" title="Ver 31/3"><div class="mdn">31</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-04-01')" title="Ver 1/4"><div class="mdn">1</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-04-02')" title="Ver 2/4"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-04-03')" title="Ver 3/4"><div class="mdn">3</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-04-04')" title="Ver 4/4"><div class="mdn">4</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-04-05')" title="Ver 5/4"><div class="mdn">5</div><div class="mcitems"></div></div></div></div><div class="month-grid" id="mo-1" style="display:none"><div class="mhdr-row"><div class="mhdr">Lun</div><div class="mhdr">Mar</div><div class="mhdr">Mié</div><div class="mhdr">Jue</div><div class="mhdr">Vie</div><div class="mhdr">Sáb</div><div class="mhdr">Dom</div></div><div class="mcells"><div class="mcell out" onclick="openDay('2026-03-30')" title="Ver 30/3"><div class="mdn">30</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-03-31')" title="Ver 31/3"><div class="mdn">31</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-01')" title="Ver 1/4"><div class="mdn">1</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-02')" title="Ver 2/4"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-03')" title="Ver 3/4"><div class="mdn">3</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-04')" title="Ver 4/4"><div class="mdn">4</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-05')" title="Ver 5/4"><div class="mdn">5</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-06')" title="Ver 6/4"><div class="mdn">6</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-07')" title="Ver 7/4"><div class="mdn">7</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-08')" title="Ver 8/4"><div class="mdn">8</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-09')" title="Ver 9/4"><div class="mdn">9</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-10')" title="Ver 10/4"><div class="mdn">10</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-11')" title="Ver 11/4"><div class="mdn">11</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-12')" title="Ver 12/4"><div class="mdn">12</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-13')" title="Ver 13/4"><div class="mdn">13</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-14')" title="Ver 14/4"><div class="mdn">14</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-15')" title="Ver 15/4"><div class="mdn">15</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-16')" title="Ver 16/4"><div class="mdn">16</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-17')" title="Ver 17/4"><div class="mdn">17</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-18')" title="Ver 18/4"><div class="mdn">18</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-19')" title="Ver 19/4"><div class="mdn">19</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-20')" title="Ver 20/4"><div class="mdn">20</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-21')" title="Ver 21/4"><div class="mdn">21</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-22')" title="Ver 22/4"><div class="mdn">22</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-23')" title="Ver 23/4"><div class="mdn">23</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-24')" title="Ver 24/4"><div class="mdn">24</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-25')" title="Ver 25/4"><div class="mdn">25</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-26')" title="Ver 26/4"><div class="mdn">26</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-27')" title="Ver 27/4"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-28')" title="Ver 28/4"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-04-29')" title="Ver 29/4"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell mtoday" onclick="openDay('2026-04-30')" title="Ver 30/4"><div class="mdn today-dn">30</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-05-01')" title="Ver 1/5"><div class="mdn">1</div><div class="mcitems"><div class="mini" data-cat="video" data-plats="Instagram, TikTok, YouTube Shorts" data-estado="Programado"><div class="mchip" style="color:#412f86;background:#ece8f9;border-left:3px solid #412f86"><span class="mctxt">¿Cuántos WhatsApp usa tu empresa p… · 12:00</span><span class="mcplats"><span class="mpdot" title="Instagram" style="background:#fce8f1">📸</span><span class="mpdot" title="TikTok" style="background:#ffe5ee">🎵</span><span class="mpdot" title="YouTube Shorts" style="background:#ffe5e5">⚡</span></span></div></div></div></div><div class="mcell out" onclick="openDay('2026-05-02')" title="Ver 2/5"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-05-03')" title="Ver 3/5"><div class="mdn">3</div><div class="mcitems"></div></div></div></div><div class="month-grid" id="mo-2" style="display:none"><div class="mhdr-row"><div class="mhdr">Lun</div><div class="mhdr">Mar</div><div class="mhdr">Mié</div><div class="mhdr">Jue</div><div class="mhdr">Vie</div><div class="mhdr">Sáb</div><div class="mhdr">Dom</div></div><div class="mcells"><div class="mcell out" onclick="openDay('2026-04-27')" title="Ver 27/4"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-04-28')" title="Ver 28/4"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-04-29')" title="Ver 29/4"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell out mtoday" onclick="openDay('2026-04-30')" title="Ver 30/4"><div class="mdn today-dn">30</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-01')" title="Ver 1/5"><div class="mdn">1</div><div class="mcitems"><div class="mini" data-cat="video" data-plats="Instagram, TikTok, YouTube Shorts" data-estado="Programado"><div class="mchip" style="color:#412f86;background:#ece8f9;border-left:3px solid #412f86"><span class="mctxt">¿Cuántos WhatsApp usa tu empresa p… · 12:00</span><span class="mcplats"><span class="mpdot" title="Instagram" style="background:#fce8f1">📸</span><span class="mpdot" title="TikTok" style="background:#ffe5ee">🎵</span><span class="mpdot" title="YouTube Shorts" style="background:#ffe5e5">⚡</span></span></div></div></div></div><div class="mcell" onclick="openDay('2026-05-02')" title="Ver 2/5"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-03')" title="Ver 3/5"><div class="mdn">3</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-04')" title="Ver 4/5"><div class="mdn">4</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-05')" title="Ver 5/5"><div class="mdn">5</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-06')" title="Ver 6/5"><div class="mdn">6</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-07')" title="Ver 7/5"><div class="mdn">7</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-08')" title="Ver 8/5"><div class="mdn">8</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-09')" title="Ver 9/5"><div class="mdn">9</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-10')" title="Ver 10/5"><div class="mdn">10</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-11')" title="Ver 11/5"><div class="mdn">11</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-12')" title="Ver 12/5"><div class="mdn">12</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-13')" title="Ver 13/5"><div class="mdn">13</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-14')" title="Ver 14/5"><div class="mdn">14</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-15')" title="Ver 15/5"><div class="mdn">15</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-16')" title="Ver 16/5"><div class="mdn">16</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-17')" title="Ver 17/5"><div class="mdn">17</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-18')" title="Ver 18/5"><div class="mdn">18</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-19')" title="Ver 19/5"><div class="mdn">19</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-20')" title="Ver 20/5"><div class="mdn">20</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-21')" title="Ver 21/5"><div class="mdn">21</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-22')" title="Ver 22/5"><div class="mdn">22</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-23')" title="Ver 23/5"><div class="mdn">23</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-24')" title="Ver 24/5"><div class="mdn">24</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-25')" title="Ver 25/5"><div class="mdn">25</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-26')" title="Ver 26/5"><div class="mdn">26</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-27')" title="Ver 27/5"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-28')" title="Ver 28/5"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-29')" title="Ver 29/5"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-30')" title="Ver 30/5"><div class="mdn">30</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-05-31')" title="Ver 31/5"><div class="mdn">31</div><div class="mcitems"></div></div></div></div><div class="month-grid" id="mo-3" style="display:none"><div class="mhdr-row"><div class="mhdr">Lun</div><div class="mhdr">Mar</div><div class="mhdr">Mié</div><div class="mhdr">Jue</div><div class="mhdr">Vie</div><div class="mhdr">Sáb</div><div class="mhdr">Dom</div></div><div class="mcells"><div class="mcell" onclick="openDay('2026-06-01')" title="Ver 1/6"><div class="mdn">1</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-02')" title="Ver 2/6"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-03')" title="Ver 3/6"><div class="mdn">3</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-04')" title="Ver 4/6"><div class="mdn">4</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-05')" title="Ver 5/6"><div class="mdn">5</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-06')" title="Ver 6/6"><div class="mdn">6</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-07')" title="Ver 7/6"><div class="mdn">7</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-08')" title="Ver 8/6"><div class="mdn">8</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-09')" title="Ver 9/6"><div class="mdn">9</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-10')" title="Ver 10/6"><div class="mdn">10</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-11')" title="Ver 11/6"><div class="mdn">11</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-12')" title="Ver 12/6"><div class="mdn">12</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-13')" title="Ver 13/6"><div class="mdn">13</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-14')" title="Ver 14/6"><div class="mdn">14</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-15')" title="Ver 15/6"><div class="mdn">15</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-16')" title="Ver 16/6"><div class="mdn">16</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-17')" title="Ver 17/6"><div class="mdn">17</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-18')" title="Ver 18/6"><div class="mdn">18</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-19')" title="Ver 19/6"><div class="mdn">19</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-20')" title="Ver 20/6"><div class="mdn">20</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-21')" title="Ver 21/6"><div class="mdn">21</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-22')" title="Ver 22/6"><div class="mdn">22</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-23')" title="Ver 23/6"><div class="mdn">23</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-24')" title="Ver 24/6"><div class="mdn">24</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-25')" title="Ver 25/6"><div class="mdn">25</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-26')" title="Ver 26/6"><div class="mdn">26</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-27')" title="Ver 27/6"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-28')" title="Ver 28/6"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-29')" title="Ver 29/6"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell" onclick="openDay('2026-06-30')" title="Ver 30/6"><div class="mdn">30</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-07-01')" title="Ver 1/7"><div class="mdn">1</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-07-02')" title="Ver 2/7"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-07-03')" title="Ver 3/7"><div class="mdn">3</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-07-04')" title="Ver 4/7"><div class="mdn">4</div><div class="mcitems"></div></div><div class="mcell out" onclick="openDay('2026-07-05')" title="Ver 5/7"><div class="mdn">5</div><div class="mcitems"></div></div></div></div></div>
+</div>
+
+<!-- DAY VIEW MODAL -->
+<div class="overlay" id="overlay" onclick="closeDay()"></div>
+<div class="daymodal" id="daymodal">
+  <div class="dm-hdr">
+    <div>
+      <div class="dm-date" id="dm-date">—</div>
+      <div class="dm-sub" id="dm-sub"></div>
+    </div>
+    <button class="dm-close" onclick="closeDay()">✕</button>
   </div>
-  <!-- month view -->
-  <div id="vm" style="display:none">
-    <div class="month-grid" id="mo-0" style="display:none"><div class="mhdr-row"><div class="mhdr">Lun</div><div class="mhdr">Mar</div><div class="mhdr">Mié</div><div class="mhdr">Jue</div><div class="mhdr">Vie</div><div class="mhdr">Sáb</div><div class="mhdr">Dom</div></div><div class="mcells"><div class="mcell out"><div class="mdn">30</div><div class="mcitems"></div></div><div class="mcell out"><div class="mdn">31</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">1</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">3</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">4</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">5</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">6</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">7</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">8</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">9</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">10</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">11</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">12</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">13</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">14</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">15</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">16</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">17</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">18</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">19</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">20</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">21</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">22</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">23</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">24</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">25</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">26</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell mtoday"><div class="mdn today-dn">30</div><div class="mcitems"></div></div><div class="mcell out"><div class="mdn">1</div><div class="mcitems"><div class="mini" data-cat="video" data-plats="Instagram, TikTok, YouTube Shorts" data-estado="Programado"><div><div class="mchip" style="color:#412f86;background:#ece8f9;border-left:3px solid #412f86"><span class="mchip-txt">¿Cuántos WhatsApp usa tu empresa par… · 12:00</span><span class="mchip-plats"><span class="mpdot" title="Instagram" style="background:#fce8f1;border:1px solid #e1306c22">📸</span><span class="mpdot" title="TikTok" style="background:#ffe5ee;border:1px solid #ff005022">🎵</span><span class="mpdot" title="YouTube Shorts" style="background:#ffe5e5;border:1px solid #cc000022">⚡</span></span></div></div></div></div></div><div class="mcell out"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell out"><div class="mdn">3</div><div class="mcitems"></div></div></div></div><div class="month-grid" id="mo-1" style="display:none"><div class="mhdr-row"><div class="mhdr">Lun</div><div class="mhdr">Mar</div><div class="mhdr">Mié</div><div class="mhdr">Jue</div><div class="mhdr">Vie</div><div class="mhdr">Sáb</div><div class="mhdr">Dom</div></div><div class="mcells"><div class="mcell out"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell out"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell out"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell out mtoday"><div class="mdn today-dn">30</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">1</div><div class="mcitems"><div class="mini" data-cat="video" data-plats="Instagram, TikTok, YouTube Shorts" data-estado="Programado"><div><div class="mchip" style="color:#412f86;background:#ece8f9;border-left:3px solid #412f86"><span class="mchip-txt">¿Cuántos WhatsApp usa tu empresa par… · 12:00</span><span class="mchip-plats"><span class="mpdot" title="Instagram" style="background:#fce8f1;border:1px solid #e1306c22">📸</span><span class="mpdot" title="TikTok" style="background:#ffe5ee;border:1px solid #ff005022">🎵</span><span class="mpdot" title="YouTube Shorts" style="background:#ffe5e5;border:1px solid #cc000022">⚡</span></span></div></div></div></div></div><div class="mcell"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">3</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">4</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">5</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">6</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">7</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">8</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">9</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">10</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">11</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">12</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">13</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">14</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">15</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">16</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">17</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">18</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">19</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">20</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">21</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">22</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">23</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">24</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">25</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">26</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">30</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">31</div><div class="mcitems"></div></div></div></div>
-  </div>
+  <div class="dm-body" id="dm-body"></div>
 </div>
 
 <!-- FOOTER -->
@@ -230,25 +262,28 @@ a{text-decoration:none;color:inherit}
 </footer>
 
 <script>
-const wLabels = ["W18 \u00b7 27 abr \u2014 3 may 2026"];
-const mLabels = ["Abril 2026", "Mayo 2026"];
-const wIds    = ["wk-0"];
-const mIds    = ["mo-0", "mo-1"];
+const wLabels = ["W16 \u00b7 13 abr \u2014 19 abr 2026", "W17 \u00b7 20 abr \u2014 26 abr 2026", "W18 \u00b7 27 abr \u2014 3 may 2026", "W19 \u00b7 4 may \u2014 10 may 2026", "W20 \u00b7 11 may \u2014 17 may 2026", "W21 \u00b7 18 may \u2014 24 may 2026", "W22 \u00b7 25 may \u2014 31 may 2026"];
+const mLabels = ["Marzo 2026", "Abril 2026", "Mayo 2026", "Junio 2026"];
+const wIds    = ["wk-0", "wk-1", "wk-2", "wk-3", "wk-4", "wk-5", "wk-6"];
+const mIds    = ["mo-0", "mo-1", "mo-2", "mo-3"];
+const DAY_CARDS = {"2026-05-01": "<div class=\"card\" data-cat=\"video\" data-plats=\"Instagram, TikTok, YouTube Shorts\" data-estado=\"Programado\"><div class=\"ct\"><span class=\"badge tipo-b\" style=\"color:#412f86;background:#ece8f9\">Video Corto</span><span class=\"estado-b\" style=\"color:#412f86;background:#ece8f9\"><i style=\"background:#412f86\"></i>Programado</span></div><div class=\"ctitle\"><span class=\"cl\">\u00bfCu\u00e1ntos WhatsApp usa tu empresa para atender clientes? \u2014 3 beneficios de centralizar</span></div><div class=\"cmeta\"><span class=\"mi\">\ud83d\udd50 12:00 CLT</span><span class=\"mi resp\">Sebasti\u00e1n</span></div><div class=\"cplats\"><span class=\"pdot\" title=\"Instagram\" style=\"background:#fce8f1;border:1.5px solid #e1306c33\">\ud83d\udcf8</span><span class=\"pdot\" title=\"TikTok\" style=\"background:#ffe5ee;border:1.5px solid #ff005033\">\ud83c\udfb5</span><span class=\"pdot\" title=\"YouTube Shorts\" style=\"background:#ffe5e5;border:1.5px solid #cc000033\">\u26a1</span></div></div>"};
+const MESES_F = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const DIAS_F  = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
-let view     = 'week';
-let wi       = 0;
-let mi       = 0;
-let fCat     = 'all';
-let fPlat    = 'all';
+let view  = 'week';
+let wi    = 2;
+let mi    = 1;
+let fCat  = 'all';
+let fEst  = 'all';
+let fPlat = 'all';
 
 function updateLabel() {
-  document.getElementById('plbl').textContent =
-    view === 'week' ? wLabels[wi] : mLabels[mi];
+  document.getElementById('plbl').textContent = view === 'week' ? wLabels[wi] : mLabels[mi];
 }
 
 function showGrid() {
-  wIds.forEach(id => { const e = document.getElementById(id); if(e) e.style.display='none'; });
-  mIds.forEach(id => { const e = document.getElementById(id); if(e) e.style.display='none'; });
+  wIds.forEach(id => { const e=document.getElementById(id); if(e) e.style.display='none'; });
+  mIds.forEach(id => { const e=document.getElementById(id); if(e) e.style.display='none'; });
   const id = view === 'week' ? wIds[wi] : mIds[mi];
   const el = document.getElementById(id);
   if (el) el.style.display = '';
@@ -260,62 +295,90 @@ function setView(v) {
   document.getElementById('vm').style.display = v==='month' ? '' : 'none';
   document.getElementById('btn-week').classList.toggle('active',  v==='week');
   document.getElementById('btn-month').classList.toggle('active', v==='month');
-  showGrid();
-  updateLabel();
+  showGrid(); updateLabel();
 }
 
 function prevPeriod() {
-  if (view==='week'  && wi > 0)              wi--;
-  if (view==='month' && mi > 0)              mi--;
+  if (view==='week'  && wi > 0)             wi--;
+  else if (view==='month' && mi > 0)        mi--;
   showGrid(); updateLabel();
 }
-
 function nextPeriod() {
-  if (view==='week'  && wi < wIds.length-1)  wi++;
-  if (view==='month' && mi < mIds.length-1)  mi++;
+  if (view==='week'  && wi < wIds.length-1) wi++;
+  else if (view==='month' && mi < mIds.length-1) mi++;
   showGrid(); updateLabel();
 }
 
+// ── FILTERS ──────────────────────────────────────────────────────────
 function filterTipo(cat, btn) {
   fCat = cat; fPlat = 'all';
   document.querySelectorAll('[data-ft]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-
-  const showPlat = (cat === 'video' || cat === 'publicacion');
+  const showPlat = (cat==='video' || cat==='publicacion');
   document.getElementById('platrow').style.display = showPlat ? 'flex' : 'none';
-  document.getElementById('vp').style.display = (cat==='video')       ? 'flex' : 'none';
-  document.getElementById('pp').style.display = (cat==='publicacion') ? 'flex' : 'none';
-
-  // reset plat buttons
+  document.getElementById('vp').style.display = cat==='video'       ? 'flex' : 'none';
+  document.getElementById('pp').style.display = cat==='publicacion' ? 'flex' : 'none';
   document.querySelectorAll('[data-fp]').forEach(b => {
     b.classList.remove('active');
-    if (b.textContent.trim() === 'Todas') b.classList.add('active');
+    if (b.textContent.trim()==='Todas') b.classList.add('active');
   });
+  applyFilters();
+}
+
+function filterEstado(est, btn) {
+  fEst = est;
+  document.querySelectorAll('[data-fe]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
   applyFilters();
 }
 
 function filterPlat(plat, btn) {
   fPlat = plat;
-  const parent = btn.closest('#vp, #pp');
-  if (parent) parent.querySelectorAll('[data-fp]').forEach(b => b.classList.remove('active'));
+  const par = btn.closest('#vp,#pp');
+  if (par) par.querySelectorAll('[data-fp]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   applyFilters();
 }
 
 function applyFilters() {
-  document.querySelectorAll('.card, .mini').forEach(el => {
+  document.querySelectorAll('.card,.mini').forEach(el => {
     const cat   = el.dataset.cat   || '';
+    const est   = el.dataset.estado || '';
     const plats = (el.dataset.plats || '').toLowerCase();
     let show = true;
     if (fCat  !== 'all') show = show && cat === fCat;
+    if (fEst  !== 'all') show = show && est === fEst;
     if (fPlat !== 'all') show = show && plats.includes(fPlat.toLowerCase());
     el.style.display = show ? '' : 'none';
   });
 }
 
+// ── DAY VIEW ─────────────────────────────────────────────────────────
+function openDay(date) {
+  const parts = date.split('-');
+  const d = new Date(+parts[0], +parts[1]-1, +parts[2]);
+  const label = DIAS_F[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES_F[d.getMonth()+1] + ' ' + d.getFullYear();
+  const cards = DAY_CARDS[date];
+  document.getElementById('dm-date').textContent = label;
+  const cnt = cards ? (cards.match(/class="card"/g)||[]).length : 0;
+  document.getElementById('dm-sub').textContent = cnt ? cnt + (cnt===1?' pieza de contenido':' piezas de contenido') : '';
+  document.getElementById('dm-body').innerHTML = cards ||
+    '<div class="dm-empty"><div>📭</div><p>No hay contenido programado para este día.</p></div>';
+  document.getElementById('overlay').style.display = '';
+  document.getElementById('daymodal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDay() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('daymodal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeDay(); });
+
 // Init
-showGrid();
-updateLabel();
+showGrid(); updateLabel();
 </script>
 </body>
 </html>
