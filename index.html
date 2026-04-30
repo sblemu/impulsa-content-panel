@@ -3,583 +3,319 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IMPULSA · Content Panel</title>
+<title>IMPULSA · Content Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ── RESET & BASE ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Roboto', sans-serif;
-  background: #f5fbfb;
-  color: #4d4d4d;
-  min-height: 100vh;
-  font-size: 13px;
-}
-a { text-decoration: none; color: inherit; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Roboto',sans-serif;background:#f4fafa;color:#4d4d4d;min-height:100vh;font-size:13px}
+a{text-decoration:none;color:inherit}
 
-/* ── HEADER ── */
-.header {
-  background: #ffffff;
-  border-bottom: 1px solid #d4eeee;
-  padding: 0 36px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(5,139,138,.06);
-}
-.logo-area { display: flex; align-items: center; gap: 12px; }
-.logo-bar {
-  width: 4px; height: 32px;
-  background: #058b8a;
-  border-radius: 4px;
-}
-.logo-text {
-  font-family: 'Poppins', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #4d4d4d;
-}
-.logo-text span { color: #058b8a; }
-.logo-sub {
-  font-family: 'Roboto', sans-serif;
-  font-size: 11px;
-  color: #999999;
-  font-weight: 500;
-  letter-spacing: .5px;
-}
-.header-right { display: flex; align-items: center; gap: 16px; }
-.updated-badge {
-  font-size: 11px;
-  color: #999999;
-  background: #e6f7f7;
-  border: 1px solid #d4eeee;
-  border-radius: 20px;
-  padding: 4px 12px;
-}
-.sheet-link {
-  font-size: 11px;
-  font-weight: 500;
-  color: #058b8a;
-  background: #e6f7f7;
-  border: 1px solid #058b8a;
-  border-radius: 35px;
-  padding: 6px 16px;
-  transition: all .15s;
-}
-.sheet-link:hover { background: #058b8a; color: #ffffff; }
+/* HEADER */
+.hdr{background:#ffffff;border-bottom:1px solid #d4eeee;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;box-shadow:0 2px 6px rgba(5,139,138,.07)}
+.hdr-l{display:flex;align-items:center;gap:12px}
+.logo-bar{width:4px;height:30px;background:#058b8a;border-radius:3px}
+.logo-txt{font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.logo-txt span{color:#058b8a}
+.logo-sub{font-size:10px;color:#999999;letter-spacing:.4px;margin-top:1px}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.upd{font-size:11px;color:#999999;background:#e6f7f7;border:1px solid #d4eeee;border-radius:20px;padding:4px 12px}
+.sheet-btn{font-size:11px;font-weight:500;color:#058b8a;background:#e6f7f7;border:1px solid #058b8a;border-radius:35px;padding:6px 16px;transition:all .15s;cursor:pointer}
+.sheet-btn:hover{background:#058b8a;color:#ffffff}
 
-/* ── STATS BAR ── */
-.stats-bar {
-  background: #ffffff;
-  border-bottom: 1px solid #d4eeee;
-  padding: 14px 36px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #f5fbfb;
-  border: 1px solid #d4eeee;
-  border-radius: 16px;
-  padding: 10px 20px;
-  min-width: 130px;
-}
-.stat-icon {
-  width: 36px; height: 36px;
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.stat-info { display: flex; flex-direction: column; }
-.stat-num {
-  font-family: 'Poppins', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-  color: #4d4d4d;
-}
-.stat-lbl {
-  font-size: 11px;
-  color: #999999;
-  margin-top: 2px;
-  font-weight: 500;
-}
+/* STATS */
+.stats{background:#ffffff;border-bottom:1px solid #d4eeee;padding:12px 32px;display:flex;gap:8px;flex-wrap:wrap}
+.sc{display:flex;align-items:center;gap:9px;background:#f4fafa;border:1px solid #d4eeee;border-radius:14px;padding:9px 18px;min-width:120px}
+.si{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.sn{font-family:'Poppins',sans-serif;font-size:19px;font-weight:700;line-height:1}
+.sl{font-size:10px;color:#999999;margin-top:2px;font-weight:500}
 
-/* ── TABS ── */
-.tabs-wrap {
-  background: #ffffff;
-  border-bottom: 3px solid #d4eeee;
-  padding: 0 36px;
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-}
-.tab {
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: #646464;
-  background: transparent;
-  border: none;
-  padding: 14px 18px 11px;
-  cursor: pointer;
-  white-space: nowrap;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -3px;
-  transition: all .15s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.tab:hover { color: #058b8a; }
-.tab.active {
-  color: #058b8a;
-  font-weight: 700;
-  border-bottom-color: #058b8a;
-}
-.tab-count {
-  background: #e6f7f7;
-  color: #058b8a;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 7px;
-  min-width: 20px;
-  text-align: center;
-}
-.tab.active .tab-count { background: #058b8a; color: #ffffff; }
+/* CONTROLS BAR */
+.ctrl{background:#ffffff;border-bottom:1px solid #d4eeee;padding:10px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.view-toggle{display:flex;background:#f4fafa;border:1px solid #d4eeee;border-radius:35px;padding:3px;gap:2px}
+.vbtn{font-family:'Roboto',sans-serif;font-size:12px;font-weight:500;padding:5px 18px;border-radius:35px;background:transparent;border:none;color:#646464;cursor:pointer;transition:all .15s}
+.vbtn.active{background:#058b8a;color:#ffffff;font-weight:700;box-shadow:0 2px 6px rgba(5,139,138,.3)}
+.period-nav{display:flex;align-items:center;gap:10px}
+.nav-arr{background:#e6f7f7;border:1px solid #d4eeee;color:#058b8a;border-radius:35px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s;user-select:none}
+.nav-arr:hover{background:#058b8a;color:#ffffff}
+.period-lbl{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:#4d4d4d;min-width:220px;text-align:center}
 
-/* ── FILTERS ── */
-.filters-wrap {
-  background: #ffffff;
-  border-bottom: 1px solid #d4eeee;
-  padding: 10px 36px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.filter-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .8px;
-  color: #999999;
-  margin-right: 4px;
-}
-.filter-btn {
-  font-family: 'Roboto', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 5px 14px;
-  border-radius: 35px;
-  background: #f5fbfb;
-  border: 1px solid #d4eeee;
-  color: #646464;
-  cursor: pointer;
-  transition: all .15s;
-}
-.filter-btn:hover { border-color: #058b8a; color: #058b8a; }
-.filter-btn.active {
-  background: #058b8a;
-  border-color: #058b8a;
-  color: #ffffff;
-  font-weight: 700;
-}
-.filter-divider {
-  width: 1px; height: 20px;
-  background: #d4eeee;
-  margin: 0 4px;
-}
+/* FILTERS */
+.frow{background:#ffffff;border-bottom:1px solid #d4eeee;padding:9px 32px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.flbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#999999;white-space:nowrap}
+.filter-btn{font-family:'Roboto',sans-serif;font-size:11px;font-weight:500;padding:5px 14px;border-radius:35px;background:#f4fafa;border:1px solid #d4eeee;color:#646464;cursor:pointer;transition:all .15s}
+.filter-btn:hover{border-color:#058b8a;color:#058b8a}
+.filter-btn.active{background:#058b8a;border-color:#058b8a;color:#ffffff;font-weight:700}
+.fdiv{width:1px;height:18px;background:#d4eeee;margin:0 3px}
+.sub-frow{background:#fafefe;border-bottom:1px solid #e8f5f5;padding:7px 32px;display:none;align-items:center;gap:7px;flex-wrap:wrap}
 
-/* ── WEEK GRID ── */
-.week-grid { display: none; padding: 24px 36px; }
-.week-grid.active { display: block; }
-.day-row {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 12px;
-  min-height: 420px;
-}
+/* CONTENT AREA */
+.content{padding:22px 32px}
 
-/* ── DAY COLUMN ── */
-.day-col {
-  background: #ffffff;
-  border: 1px solid #d4eeee;
-  border-radius: 16px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 2px 12px rgba(5,139,138,.08);
-  transition: box-shadow .2s;
-}
-.day-col:hover { box-shadow: 0 6px 20px rgba(5,139,138,.15); }
-.day-col.is-today {
-  border-color: #058b8a;
-  box-shadow: 0 0 0 2px #e6f7f7, 0 2px 12px rgba(5,139,138,.08);
-}
-.day-col.is-past { opacity: .85; }
+/* WEEK GRID */
+.drow{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;min-height:380px}
+.dcol{background:#ffffff;border:1px solid #d4eeee;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 12px rgba(5,139,138,.08);transition:box-shadow .2s}
+.dcol:hover{box-shadow:0 6px 20px rgba(5,139,138,.16)}
+.dcol.today{border-color:#058b8a;box-shadow:0 0 0 2px #e6f7f7,0 2px 12px rgba(5,139,138,.08)}
+.dcol.past{opacity:.82}
+.dhdr{padding:9px 11px 7px;display:flex;align-items:center;justify-content:space-between;background:#dcf5f0;border-bottom:1px solid #d4eeee}
+.today .dhdr{background:#058b8a}
+.dname{font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#646464}
+.today .dname{color:#ffffff}
+.dcnt{background:#058b8a;color:#ffffff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 7px}
+.today .dcnt{background:#ffffff;color:#058b8a}
+.dbody{display:flex;flex-direction:column;gap:7px;padding:8px;flex:1}
+.eday{flex:1;display:flex;align-items:center;justify-content:center;color:#999999;font-size:11px;border:1.5px dashed #d4eeee;border-radius:9px;padding:16px 0;margin:2px 0}
 
-.day-header {
-  padding: 10px 12px 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #e6f7f7;
-  border-bottom: 1px solid #d4eeee;
-}
-.is-today .day-header {
-  background: #058b8a;
-}
-.day-name {
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .6px;
-  color: #646464;
-}
-.is-today .day-name { color: #ffffff; }
-.day-count {
-  background: #058b8a;
-  color: #ffffff;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 7px;
-}
-.is-today .day-count {
-  background: #ffffff;
-  color: #058b8a;
-}
+/* WEEK CARD */
+.card{background:#f4fafa;border:1px solid #d4eeee;border-radius:10px;padding:9px 10px;transition:all .15s;cursor:default}
+.card:hover{box-shadow:0 6px 20px rgba(5,139,138,.16);transform:translateY(-1px);background:#ffffff;border-color:#058b8a33}
+.ct{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.ctitle{font-size:12px;font-weight:500;color:#4d4d4d;line-height:1.4;margin-bottom:6px}
+.cl{color:#4d4d4d}
+.cl:hover{color:#058b8a}
+.arr{font-size:10px;color:#058b8a;margin-left:2px}
+.cmeta{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.mi{font-size:10px;color:#999999;background:#ffffff;border:1px solid #d4eeee;border-radius:20px;padding:1px 7px}
+.resp{color:#646464;font-weight:500}
+.cplats{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.pdot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:13px;cursor:default;transition:transform .15s,box-shadow .15s;flex-shrink:0}
+.pdot:hover{transform:scale(1.18);box-shadow:0 2px 8px rgba(0,0,0,.12)}
 
-.day-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  flex: 1;
-}
-.empty-day {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #999999;
-  font-size: 12px;
-  padding: 24px 0;
-  border: 1.5px dashed #d4eeee;
-  border-radius: 10px;
-  margin: 4px 0;
-}
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;border-radius:20px;padding:2px 8px;white-space:nowrap}
+.tipo-b{font-weight:700}
+.estado-b{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;white-space:nowrap}
+.estado-b i{width:6px;height:6px;border-radius:50%;flex-shrink:0;font-style:normal}
 
-/* ── CARD ── */
-.card {
-  background: #f5fbfb;
-  border: 1px solid #d4eeee;
-  border-radius: 12px;
-  padding: 10px 11px;
-  transition: box-shadow .15s, transform .1s;
-  cursor: default;
-}
-.card:hover {
-  box-shadow: 0 6px 20px rgba(5,139,138,.15);
-  transform: translateY(-1px);
-  background: #ffffff;
-  border-color: #058b8a44;
-}
-.card-top {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 7px;
-}
-.card-title {
-  font-size: 12px;
-  font-weight: 500;
-  color: #4d4d4d;
-  line-height: 1.45;
-  margin-bottom: 7px;
-}
-.card-link { color: #4d4d4d; }
-.card-link:hover { color: #058b8a; }
-.arrow {
-  font-size: 11px;
-  color: #058b8a;
-  margin-left: 2px;
-}
-.card-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 7px;
-}
-.meta-item {
-  font-size: 10px;
-  color: #999999;
-  background: #ffffff;
-  border: 1px solid #d4eeee;
-  border-radius: 20px;
-  padding: 1px 8px;
-}
-.resp { color: #646464; font-weight: 500; }
-.card-plats { display: flex; flex-wrap: wrap; gap: 4px; }
-.card-notas {
-  margin-top: 7px;
-  font-size: 10px;
-  color: #999999;
-  font-style: italic;
-  line-height: 1.4;
-  padding-top: 6px;
-  border-top: 1px solid #d4eeee;
-}
+/* MONTH GRID */
+.mhdr-row{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
+.mhdr{text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#999999;padding:5px 0}
+.mcells{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.mcell{background:#ffffff;border:1px solid #d4eeee;border-radius:10px;padding:7px 8px;min-height:90px;transition:box-shadow .15s}
+.mcell:hover{box-shadow:0 6px 20px rgba(5,139,138,.16)}
+.mcell.out{background:#f9fbfb;opacity:.55}
+.mcell.mtoday{border-color:#058b8a;box-shadow:0 0 0 2px #e6f7f7}
+.mdn{font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;color:#646464;margin-bottom:5px}
+.today-dn{background:#058b8a;color:#ffffff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px}
+.mcitems{display:flex;flex-direction:column;gap:3px}
 
-/* ── BADGES ── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  font-weight: 600;
-  border-radius: 20px;
-  padding: 3px 9px;
-  white-space: nowrap;
-  font-family: 'Roboto', sans-serif;
-}
-.estado-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  font-weight: 700;
-  border-radius: 20px;
-  padding: 3px 9px;
-  font-family: 'Roboto', sans-serif;
-}
-.dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
+/* MINI CARD */
+.mini{cursor:default}
+.mchip{font-size:10px;font-weight:500;padding:3px 7px;border-radius:5px;display:flex;align-items:center;justify-content:space-between;gap:5px;transition:opacity .1s;line-height:1.3}
+.mchip:hover{opacity:.8}
+.mchip-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.mchip-plats{display:flex;gap:2px;flex-shrink:0}
+.mpdot{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;font-size:9px}
 
-/* ── FOOTER ── */
-.footer {
-  background: #058b8a;
-  color: #ffffff;
-  text-align: center;
-  padding: 18px 36px;
-  font-size: 11px;
-  opacity: .9;
-}
-.footer a { color: #a9d7d7; }
-.footer a:hover { color: #ffffff; }
+/* FOOTER */
+.footer{background:#058b8a;color:#ffffff;text-align:center;padding:16px 32px;font-size:11px}
+.footer a{color:#a9d7d7}
+.footer a:hover{color:#ffffff}
 
-/* ── RESPONSIVE ── */
-@media(max-width:1100px) {
-  .day-row { grid-template-columns: repeat(4, 1fr); }
+/* RESPONSIVE */
+@media(max-width:1100px){.drow{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:750px){
+  .drow{grid-template-columns:repeat(2,1fr)}
+  .mcells{grid-template-columns:repeat(4,1fr)}
+  .hdr,.stats,.ctrl,.frow,.sub-frow,.content{padding-left:14px;padding-right:14px}
 }
-@media(max-width:700px) {
-  .day-row { grid-template-columns: repeat(2, 1fr); }
-  .header, .stats-bar, .tabs-wrap, .filters-wrap, .week-grid { padding-left: 16px; padding-right: 16px; }
-}
-@media(max-width:400px) {
-  .day-row { grid-template-columns: 1fr; }
+@media(max-width:480px){
+  .drow{grid-template-columns:1fr}
+  .mcells{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
-<header class="header">
-  <div class="logo-area">
+<header class="hdr">
+  <div class="hdr-l">
     <div class="logo-bar"></div>
     <div>
-      <div class="logo-text">IMPULSA<span> Suite</span></div>
-      <div class="logo-sub">Content Panel</div>
+      <div class="logo-txt">IMPULSA<span> Suite</span></div>
+      <div class="logo-sub">Content Hub</div>
     </div>
   </div>
-  <div class="header-right">
-    <span class="updated-badge">Actualizado: 30/04/2026 17:55</span>
+  <div class="hdr-r">
+    <span class="upd">Actualizado: 30/04/2026 18:05</span>
     <a href="https://docs.google.com/spreadsheets/d/1tp1MRjJU6g6vF5VD78k-xbV6tcSM5XVZb_FQe9HIdIs/edit#gid=1371647617"
-       target="_blank" class="sheet-link">📋 Abrir Sheet</a>
+       target="_blank" class="sheet-btn">📋 Abrir Sheet</a>
   </div>
 </header>
 
-<!-- STATS BAR -->
-<div class="stats-bar">
-  <div class="stat-card">
-    <div class="stat-icon" style="background:#e6f7f7;color:#058b8a">📅</div>
-    <div class="stat-info">
-      <span class="stat-num">1</span>
-      <span class="stat-lbl">Esta semana</span>
-    </div>
+<!-- STATS -->
+<div class="stats">
+  <div class="sc">
+    <div class="si" style="background:#e6f7f7;color:#058b8a">📅</div>
+    <div><div class="sn">1</div><div class="sl">Esta semana</div></div>
   </div>
-  <div class="stat-card">
-    <div class="stat-icon" style="background:#e6f5ed;color:#1a7a4a">✓</div>
-    <div class="stat-info">
-      <span class="stat-num" style="color:#1a7a4a">0</span>
-      <span class="stat-lbl">Publicados</span>
-    </div>
+  <div class="sc">
+    <div class="si" style="background:#e6f5ed;color:#1a7a4a">✓</div>
+    <div><div class="sn" style="color:#1a7a4a">0</div><div class="sl">Publicados</div></div>
   </div>
-  <div class="stat-card">
-    <div class="stat-icon" style="background:#ece8f9;color:#412f86">⏱</div>
-    <div class="stat-info">
-      <span class="stat-num" style="color:#412f86">1</span>
-      <span class="stat-lbl">Programados</span>
-    </div>
+  <div class="sc">
+    <div class="si" style="background:#ece8f9;color:#412f86">⏱</div>
+    <div><div class="sn" style="color:#412f86">1</div><div class="sl">Programados</div></div>
   </div>
-  <div class="stat-card">
-    <div class="stat-icon" style="background:#fef3dc;color:#b06a00">⚙</div>
-    <div class="stat-info">
-      <span class="stat-num" style="color:#b06a00">0</span>
-      <span class="stat-lbl">En producción</span>
-    </div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon" style="background:#f3f3f3;color:#646464">≡</div>
-    <div class="stat-info">
-      <span class="stat-num">1</span>
-      <span class="stat-lbl">Total en grilla</span>
-    </div>
+  <div class="sc">
+    <div class="si" style="background:#fef3dc;color:#b06a00">⚙</div>
+    <div><div class="sn" style="color:#b06a00">0</div><div class="sl">En producción</div></div>
   </div>
 </div>
 
-<!-- TABS -->
-<div class="tabs-wrap">
-<button class="tab active" onclick="showWeek(0)" id="tab-0">W18 · 27 abr — 3 may 2026<span class="tab-count">1</span></button>
+<!-- CONTROLS -->
+<div class="ctrl">
+  <div class="view-toggle">
+    <button class="vbtn active" id="btn-week" onclick="setView('week')">📅 Semana</button>
+    <button class="vbtn"        id="btn-month" onclick="setView('month')">🗓 Mes</button>
+  </div>
+  <div class="period-nav">
+    <div class="nav-arr" onclick="prevPeriod()">←</div>
+    <div class="period-lbl" id="plbl"></div>
+    <div class="nav-arr" onclick="nextPeriod()">→</div>
+  </div>
+  <div style="width:120px"></div>
 </div>
 
-<!-- FILTERS -->
-<div class="filters-wrap">
-  <span class="filter-label">Plataforma:</span>
-  <button class="filter-btn active" id="plat-all" onclick="filterBy('plataforma','all',this)">Todas</button>
-  <button class="filter-btn" onclick="filterBy('plataforma','Instagram',this)">📸 Instagram</button>
-<button class="filter-btn" onclick="filterBy('plataforma','TikTok',this)">🎵 TikTok</button>
-<button class="filter-btn" onclick="filterBy('plataforma','YouTube Shorts',this)">⚡ YouTube Shorts</button>
-  <div class="filter-divider"></div>
-  <span class="filter-label">Estado:</span>
-  <button class="filter-btn active" id="estado-all" onclick="filterBy('estado','all',this)">Todos</button>
-  <button class="filter-btn" onclick="filterBy('estado','Publicado',this)">✓ Publicado</button>
-  <button class="filter-btn" onclick="filterBy('estado','Programado',this)">⏱ Programado</button>
-  <button class="filter-btn" onclick="filterBy('estado','En Producción',this)">⚙ En Producción</button>
-  <button class="filter-btn" onclick="filterBy('estado','Borrador',this)">◻ Borrador</button>
-  <button class="filter-btn" onclick="filterBy('estado','Idea',this)">💡 Idea</button>
+<!-- FILTERS ROW 1: tipo -->
+<div class="frow">
+  <span class="flbl">Contenido:</span>
+  <button class="filter-btn active" data-ft onclick="filterTipo('all',this)">Todos</button>
+  <button class="filter-btn" data-ft onclick="filterTipo('articulo',this)">📝 Artículo</button>
+  <button class="filter-btn" data-ft onclick="filterTipo('video',this)">🎬 Video</button>
+  <button class="filter-btn" data-ft onclick="filterTipo('publicacion',this)">📱 Publicación</button>
+  <button class="filter-btn" data-ft onclick="filterTipo('email',this)">✉ Email</button>
+  <button class="filter-btn" data-ft onclick="filterTipo('evento',this)">📅 Evento</button>
 </div>
 
-<!-- WEEK GRIDS -->
-<div class="week-grid active" id="grid-0"><div class="day-row">
-      <div class="day-col is-past">
-        <div class="day-header">
-          <span class="day-name">Lun 27</span>
-          
-        </div>
-        <div class="day-body"><div class="empty-day">Sin contenido</div></div>
-      </div>
-      <div class="day-col is-past">
-        <div class="day-header">
-          <span class="day-name">Mar 28</span>
-          
-        </div>
-        <div class="day-body"><div class="empty-day">Sin contenido</div></div>
-      </div>
-      <div class="day-col is-past">
-        <div class="day-header">
-          <span class="day-name">Mié 29</span>
-          
-        </div>
-        <div class="day-body"><div class="empty-day">Sin contenido</div></div>
-      </div>
-      <div class="day-col is-today">
-        <div class="day-header">
-          <span class="day-name">Jue 30</span>
-          
-        </div>
-        <div class="day-body"><div class="empty-day">Sin contenido</div></div>
-      </div>
-      <div class="day-col">
-        <div class="day-header">
-          <span class="day-name">Vie 1</span>
-          <span class="day-count">1</span>
-        </div>
-        <div class="day-body">
-    <div class="card" data-tipo="Video Corto" data-estado="Programado"
-         data-plataformas="Instagram, TikTok, YouTube Shorts">
-      <div class="card-top">
-        <span class="badge tipo-badge" style="color:#412f86;background:#ece8f9">Video Corto</span>
-        <span class="estado-badge" style="color:#412f86;background:#ece8f9"><span class="dot" style="background:#412f86"></span>Programado</span>
-      </div>
-      <div class="card-title"><span class="card-link">¿Cuántos WhatsApp usa tu empresa para atender clientes? — 3 beneficios de centralizar</span></div>
-      <div class="card-meta"><span class="meta-item">🕐 12:00 CLT</span><span class="meta-item resp">Sebastián</span></div>
-      <div class="card-plats"><span class="badge plat-badge" style="color:#e1306c;background:#fce8f1">📸 Instagram</span><span class="badge plat-badge" style="color:#ff0050;background:#ffe5ee">🎵 TikTok</span><span class="badge plat-badge" style="color:#cc0000;background:#ffe5e5">⚡ YouTube Shorts</span></div>
-      <p class="card-notas">3 posts: IG Reel + TikTok + YT Short</p>
-    </div></div>
-      </div>
-      <div class="day-col">
-        <div class="day-header">
-          <span class="day-name">Sáb 2</span>
-          
-        </div>
-        <div class="day-body"><div class="empty-day">Sin contenido</div></div>
-      </div>
-      <div class="day-col">
-        <div class="day-header">
-          <span class="day-name">Dom 3</span>
-          
-        </div>
-        <div class="day-body"><div class="empty-day">Sin contenido</div></div>
-      </div></div></div>
+<!-- FILTERS ROW 2: plataforma (condicional) -->
+<div class="sub-frow" id="platrow">
+  <span class="flbl">Plataforma:</span>
+  <!-- video platforms -->
+  <div id="vp" style="display:none;gap:6px;flex-wrap:wrap;align-items:center">
+    <button class="filter-btn active" data-fp onclick="filterPlat('all',this)">Todas</button>
+    <button class="filter-btn" data-fp onclick="filterPlat('Instagram',this)">📸 Instagram</button>
+<button class="filter-btn" data-fp onclick="filterPlat('TikTok',this)">🎵 TikTok</button>
+<button class="filter-btn" data-fp onclick="filterPlat('YouTube Shorts',this)">⚡ YouTube Shorts</button>
+  </div>
+  <!-- publicacion platforms -->
+  <div id="pp" style="display:none;gap:6px;flex-wrap:wrap;align-items:center">
+    <button class="filter-btn active" data-fp onclick="filterPlat('all',this)">Todas</button>
+    <button class="filter-btn" data-fp onclick="filterPlat('Instagram',this)">📸 Instagram</button>
+<button class="filter-btn" data-fp onclick="filterPlat('TikTok',this)">🎵 TikTok</button>
+<button class="filter-btn" data-fp onclick="filterPlat('LinkedIn',this)">💼 LinkedIn</button>
+<button class="filter-btn" data-fp onclick="filterPlat('Facebook',this)">📘 Facebook</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+  <!-- week view -->
+  <div id="vw">
+    <div class="week-grid" id="wk-0" style="display:none"><div class="drow"><div class="dcol past"><div class="dhdr"><span class="dname">Lun 27</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr"><span class="dname">Mar 28</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol past"><div class="dhdr"><span class="dname">Mié 29</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol today"><div class="dhdr"><span class="dname">Jue 30</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr"><span class="dname">Vie 1</span><span class="dcnt">1</span></div><div class="dbody"><div class="card" data-cat="video" data-plats="Instagram, TikTok, YouTube Shorts" data-estado="Programado"><div class="ct"><span class="badge tipo-b" style="color:#412f86;background:#ece8f9">Video Corto</span><span class="estado-b" style="color:#412f86;background:#ece8f9"><i style="background:#412f86"></i>Programado</span></div><div class="ctitle"><span class="cl">¿Cuántos WhatsApp usa tu empresa para atender clientes? — 3 beneficios de centralizar</span></div><div class="cmeta"><span class="mi">🕐 12:00 CLT</span><span class="mi resp">Sebastián</span></div><div class="cplats"><span class="pdot" title="Instagram" style="background:#fce8f1;border:1.5px solid #e1306c33">📸</span><span class="pdot" title="TikTok" style="background:#ffe5ee;border:1.5px solid #ff005033">🎵</span><span class="pdot" title="YouTube Shorts" style="background:#ffe5e5;border:1.5px solid #cc000033">⚡</span></div></div></div></div><div class="dcol"><div class="dhdr"><span class="dname">Sáb 2</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div><div class="dcol"><div class="dhdr"><span class="dname">Dom 3</span></div><div class="dbody"><div class="eday">Sin contenido</div></div></div></div></div>
+  </div>
+  <!-- month view -->
+  <div id="vm" style="display:none">
+    <div class="month-grid" id="mo-0" style="display:none"><div class="mhdr-row"><div class="mhdr">Lun</div><div class="mhdr">Mar</div><div class="mhdr">Mié</div><div class="mhdr">Jue</div><div class="mhdr">Vie</div><div class="mhdr">Sáb</div><div class="mhdr">Dom</div></div><div class="mcells"><div class="mcell out"><div class="mdn">30</div><div class="mcitems"></div></div><div class="mcell out"><div class="mdn">31</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">1</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">3</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">4</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">5</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">6</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">7</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">8</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">9</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">10</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">11</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">12</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">13</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">14</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">15</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">16</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">17</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">18</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">19</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">20</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">21</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">22</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">23</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">24</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">25</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">26</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell mtoday"><div class="mdn today-dn">30</div><div class="mcitems"></div></div><div class="mcell out"><div class="mdn">1</div><div class="mcitems"><div class="mini" data-cat="video" data-plats="Instagram, TikTok, YouTube Shorts" data-estado="Programado"><div><div class="mchip" style="color:#412f86;background:#ece8f9;border-left:3px solid #412f86"><span class="mchip-txt">¿Cuántos WhatsApp usa tu empresa par… · 12:00</span><span class="mchip-plats"><span class="mpdot" title="Instagram" style="background:#fce8f1;border:1px solid #e1306c22">📸</span><span class="mpdot" title="TikTok" style="background:#ffe5ee;border:1px solid #ff005022">🎵</span><span class="mpdot" title="YouTube Shorts" style="background:#ffe5e5;border:1px solid #cc000022">⚡</span></span></div></div></div></div></div><div class="mcell out"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell out"><div class="mdn">3</div><div class="mcitems"></div></div></div></div><div class="month-grid" id="mo-1" style="display:none"><div class="mhdr-row"><div class="mhdr">Lun</div><div class="mhdr">Mar</div><div class="mhdr">Mié</div><div class="mhdr">Jue</div><div class="mhdr">Vie</div><div class="mhdr">Sáb</div><div class="mhdr">Dom</div></div><div class="mcells"><div class="mcell out"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell out"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell out"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell out mtoday"><div class="mdn today-dn">30</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">1</div><div class="mcitems"><div class="mini" data-cat="video" data-plats="Instagram, TikTok, YouTube Shorts" data-estado="Programado"><div><div class="mchip" style="color:#412f86;background:#ece8f9;border-left:3px solid #412f86"><span class="mchip-txt">¿Cuántos WhatsApp usa tu empresa par… · 12:00</span><span class="mchip-plats"><span class="mpdot" title="Instagram" style="background:#fce8f1;border:1px solid #e1306c22">📸</span><span class="mpdot" title="TikTok" style="background:#ffe5ee;border:1px solid #ff005022">🎵</span><span class="mpdot" title="YouTube Shorts" style="background:#ffe5e5;border:1px solid #cc000022">⚡</span></span></div></div></div></div></div><div class="mcell"><div class="mdn">2</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">3</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">4</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">5</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">6</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">7</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">8</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">9</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">10</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">11</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">12</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">13</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">14</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">15</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">16</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">17</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">18</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">19</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">20</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">21</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">22</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">23</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">24</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">25</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">26</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">27</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">28</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">29</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">30</div><div class="mcitems"></div></div><div class="mcell"><div class="mdn">31</div><div class="mcitems"></div></div></div></div>
+  </div>
+</div>
 
 <!-- FOOTER -->
 <footer class="footer">
-  IMPULSA Suite · Content Panel ·
+  IMPULSA Suite · Content Hub ·
   <a href="https://docs.google.com/spreadsheets/d/1tp1MRjJU6g6vF5VD78k-xbV6tcSM5XVZb_FQe9HIdIs/edit#gid=1371647617" target="_blank">
     Editar en Google Sheets
   </a>
 </footer>
 
 <script>
-let filters = {plataforma: 'all', estado: 'all'};
+const wLabels = ["W18 \u00b7 27 abr \u2014 3 may 2026"];
+const mLabels = ["Abril 2026", "Mayo 2026"];
+const wIds    = ["wk-0"];
+const mIds    = ["mo-0", "mo-1"];
 
-function showWeek(i) {
-  document.querySelectorAll('.week-grid').forEach(g => g.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('grid-' + i).classList.add('active');
-  document.getElementById('tab-' + i).classList.add('active');
+let view     = 'week';
+let wi       = 0;
+let mi       = 0;
+let fCat     = 'all';
+let fPlat    = 'all';
+
+function updateLabel() {
+  document.getElementById('plbl').textContent =
+    view === 'week' ? wLabels[wi] : mLabels[mi];
 }
 
-function filterBy(type, value, btn) {
-  filters[type] = value;
-  document.querySelectorAll('.filter-btn').forEach(b => {
-    const oc = b.getAttribute('onclick') || '';
-    if (oc.includes("'" + type + "'")) b.classList.remove('active');
+function showGrid() {
+  wIds.forEach(id => { const e = document.getElementById(id); if(e) e.style.display='none'; });
+  mIds.forEach(id => { const e = document.getElementById(id); if(e) e.style.display='none'; });
+  const id = view === 'week' ? wIds[wi] : mIds[mi];
+  const el = document.getElementById(id);
+  if (el) el.style.display = '';
+}
+
+function setView(v) {
+  view = v;
+  document.getElementById('vw').style.display = v==='week'  ? '' : 'none';
+  document.getElementById('vm').style.display = v==='month' ? '' : 'none';
+  document.getElementById('btn-week').classList.toggle('active',  v==='week');
+  document.getElementById('btn-month').classList.toggle('active', v==='month');
+  showGrid();
+  updateLabel();
+}
+
+function prevPeriod() {
+  if (view==='week'  && wi > 0)              wi--;
+  if (view==='month' && mi > 0)              mi--;
+  showGrid(); updateLabel();
+}
+
+function nextPeriod() {
+  if (view==='week'  && wi < wIds.length-1)  wi++;
+  if (view==='month' && mi < mIds.length-1)  mi++;
+  showGrid(); updateLabel();
+}
+
+function filterTipo(cat, btn) {
+  fCat = cat; fPlat = 'all';
+  document.querySelectorAll('[data-ft]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const showPlat = (cat === 'video' || cat === 'publicacion');
+  document.getElementById('platrow').style.display = showPlat ? 'flex' : 'none';
+  document.getElementById('vp').style.display = (cat==='video')       ? 'flex' : 'none';
+  document.getElementById('pp').style.display = (cat==='publicacion') ? 'flex' : 'none';
+
+  // reset plat buttons
+  document.querySelectorAll('[data-fp]').forEach(b => {
+    b.classList.remove('active');
+    if (b.textContent.trim() === 'Todas') b.classList.add('active');
   });
+  applyFilters();
+}
+
+function filterPlat(plat, btn) {
+  fPlat = plat;
+  const parent = btn.closest('#vp, #pp');
+  if (parent) parent.querySelectorAll('[data-fp]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   applyFilters();
 }
 
 function applyFilters() {
-  document.querySelectorAll('.card').forEach(card => {
-    const estado = card.dataset.estado || '';
-    const plats  = (card.dataset.plataformas || '').toLowerCase();
+  document.querySelectorAll('.card, .mini').forEach(el => {
+    const cat   = el.dataset.cat   || '';
+    const plats = (el.dataset.plats || '').toLowerCase();
     let show = true;
-    if (filters.plataforma !== 'all')
-      show = show && plats.includes(filters.plataforma.toLowerCase());
-    if (filters.estado !== 'all')
-      show = show && estado === filters.estado;
-    card.style.display = show ? '' : 'none';
+    if (fCat  !== 'all') show = show && cat === fCat;
+    if (fPlat !== 'all') show = show && plats.includes(fPlat.toLowerCase());
+    el.style.display = show ? '' : 'none';
   });
 }
+
+// Init
+showGrid();
+updateLabel();
 </script>
 </body>
 </html>
