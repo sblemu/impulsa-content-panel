@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""IMPULSA Content Hub — Generator v5"""
+"""IMPULSA Marketing Content Hub — Generator v6"""
 
 import json, re, calendar as cal_mod
 from datetime import datetime, timedelta
 from collections import defaultdict
 from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
 import gspread
 
 SHEET_ID = "1tp1MRjJU6g6vF5VD78k-xbV6tcSM5XVZb_FQe9HIdIs"
@@ -26,6 +27,123 @@ def parse_fecha(s):
     except:
         return ""
 
+# ── CROSS-REFERENCE LOADING ───────────────────────────────────────────────────
+
+def _norm(s):
+    """Normalize string for fuzzy matching."""
+    return re.sub(r"[^a-záéíóúüñ0-9 ]", "", s.lower().strip())
+
+def _words(s):
+    return {w for w in _norm(s).split() if len(w) > 4}
+
+def load_references(service, sheet_id):
+    """Read Videos and Newsletters tabs, extract Drive folder URLs from N° col.
+    Returns dict: normalized_title → {type, num, folder_url, stats_url}
+    """
+    refs = {}
+    try:
+        # ── Videos tab (N°=colA, TEMA=colE) ──
+        res = service.spreadsheets().get(
+            spreadsheetId=sheet_id,
+            ranges=["Videos!A:E"],
+            includeGridData=True
+        ).execute()
+        for row in res["sheets"][0]["data"][0].get("rowData", [])[1:]:
+            cells = row.get("values", [])
+            if len(cells) < 5: continue
+            folder_url = cells[0].get("hyperlink", "")
+            num        = cells[0].get("formattedValue", "")
+            tema       = cells[4].get("formattedValue", "")
+            if tema and folder_url:
+                refs[_norm(tema)] = {"type": "video", "num": num,
+                                     "folder_url": folder_url, "stats_url": ""}
+    except Exception as e:
+        print(f"   [warn] Videos refs: {e}")
+    try:
+        # ── Newsletters tab (N°=colA, TEMA=colE, ESTADISTICAS=colJ) ──
+        res2 = service.spreadsheets().get(
+            spreadsheetId=sheet_id,
+            ranges=["Newsletters!A:J"],
+            includeGridData=True
+        ).execute()
+        for row in res2["sheets"][0]["data"][0].get("rowData", [])[1:]:
+            cells = row.get("values", [])
+            if len(cells) < 5: continue
+            folder_url = cells[0].get("hyperlink", "")
+            num        = cells[0].get("formattedValue", "")
+            tema       = cells[4].get("formattedValue", "")
+            stats_url  = cells[9].get("hyperlink", "") if len(cells) > 9 else ""
+            if tema and folder_url:
+                refs[_norm(tema)] = {"type": "newsletter", "num": num,
+                                     "folder_url": folder_url, "stats_url": stats_url}
+    except Exception as e:
+        print(f"   [warn] Newsletters refs: {e}")
+    try:
+        # ── Articulos tab (N°=colA, ARTICULO=colI hyperlink, LINK=colK) ──
+        res3 = service.spreadsheets().get(
+            spreadsheetId=sheet_id,
+            ranges=["Articulos!A:K"],
+            includeGridData=True
+        ).execute()
+        for row in res3["sheets"][0]["data"][0].get("rowData", [])[1:]:
+            cells = row.get("values", [])
+            if len(cells) < 6: continue
+            folder_url = cells[0].get("hyperlink", "")
+            num        = cells[0].get("formattedValue", "")
+            tema       = cells[5].get("formattedValue", "")  # TEMA col F
+            art_url    = cells[8].get("hyperlink", "") if len(cells) > 8 else ""
+            pub_url    = cells[10].get("hyperlink", "") if len(cells) > 10 else ""
+            if tema and (folder_url or art_url):
+                refs[_norm(tema)] = {"type": "articulo", "num": num,
+                                     "folder_url": folder_url or art_url,
+                                     "stats_url": pub_url}
+    except Exception as e:
+        print(f"   [warn] Articulos refs: {e}")
+    return refs
+
+def find_ref(titulo, ref_data):
+    """Fuzzy-match a calendar title against the reference index."""
+    if not ref_data or not titulo:
+        return None
+    key = _norm(titulo)
+    if key in ref_data:
+        return ref_data[key]
+    words_a = _words(titulo)
+    best, best_n = None, 0
+    for rkey, rval in ref_data.items():
+        overlap = len(words_a & _words(rkey))
+        if overlap >= 3 and overlap > best_n:
+            best_n, best = overlap, rval
+    return best
+
+def build_resource_links(item, ref_data):
+    """Build list of resource link dicts for a calendar item."""
+    links = []
+    raw_link = item.get("link", "")
+    raw_ref  = item.get("ref", "")
+
+    # Direct published URL in LINK column
+    if raw_link and raw_link.startswith("http"):
+        links.append({"label": "Ver publicación", "url": raw_link, "icon": "🔗"})
+
+    # REF column as a URL (Drive folder or doc link)
+    if raw_ref and raw_ref.startswith("http"):
+        links.append({"label": "Ver referencia", "url": raw_ref, "icon": "📁"})
+
+    # Auto-lookup from other tabs
+    matched = find_ref(item.get("titulo", ""), ref_data)
+    if matched:
+        t   = matched.get("type", "")
+        fol = matched.get("folder_url", "")
+        sta = matched.get("stats_url", "")
+        if fol:
+            icons = {"video": "🎬", "newsletter": "📧", "articulo": "📄"}
+            labels = {"video": "Carpeta del video", "newsletter": "Carpeta newsletter", "articulo": "Carpeta artículo"}
+            links.append({"label": labels.get(t, "Carpeta Drive"), "url": fol, "icon": icons.get(t, "📁")})
+        if sta:
+            links.append({"label": "Estadísticas", "url": sta, "icon": "📊"})
+    return links
+
 # Maps granular internal states → macro state (for top-level filtering)
 ESTADO_INTERNO_MAP = {
     "Por redactar":  "En Producción",
@@ -43,14 +161,16 @@ ESTADO_INTERNO_MAP = {
     "Cancelado":     "Cancelado",
 }
 
-def normalize(rows):
+def normalize(rows, ref_data=None):
+    if ref_data is None:
+        ref_data = {}
     items = []
     for r in rows:
         fecha = parse_fecha(r.get("FECHA", ""))
         if not fecha:
             continue
         estado = r.get("ESTADO", "")
-        items.append({
+        item = {
             "fecha":        fecha,
             "hora":         r.get("HORA (CLT)", ""),
             "tipo":         r.get("TIPO", ""),
@@ -62,10 +182,13 @@ def normalize(rows):
             "link":         r.get("LINK", ""),
             "responsable":  r.get("RESPONSABLE", ""),
             "ref":          r.get("REF", ""),
+            "notas":        r.get("NOTAS", ""),
             "hashtags":     r.get("HASHTAGS", ""),
             "descripcion":  r.get("DESCRIPCION", ""),
             "url_embed":    r.get("URL_EMBED", ""),
-        })
+        }
+        item["resource_links"] = build_resource_links(item, ref_data)
+        items.append(item)
     items.sort(key=lambda x: (x["fecha"], x["hora"] or "23:59"))
     for i, item in enumerate(items):
         item["cid"] = f"c{i}"
@@ -357,20 +480,22 @@ def build_html(items):
     card_data = {}
     for it in items:
         card_data[it["cid"]] = {
-            "titulo":       it["titulo"],
-            "tipo":         it["tipo"],
-            "categoria":    it["categoria"],
-            "estado":       it["estado"],
-            "macro_estado": it["macro_estado"],
-            "fecha":        it["fecha"],
-            "hora":         it["hora"],
-            "responsable":  it["responsable"],
-            "link":         it["link"],
-            "plataformas":  it["plataformas"],
-            "hashtags":     it["hashtags"],
-            "descripcion":  it["descripcion"],
-            "url_embed":    it["url_embed"],
-            "ref":          it["ref"],
+            "titulo":         it["titulo"],
+            "tipo":           it["tipo"],
+            "categoria":      it["categoria"],
+            "estado":         it["estado"],
+            "macro_estado":   it["macro_estado"],
+            "fecha":          it["fecha"],
+            "hora":           it["hora"],
+            "responsable":    it["responsable"],
+            "link":           it["link"],
+            "plataformas":    it["plataformas"],
+            "hashtags":       it["hashtags"],
+            "descripcion":    it["descripcion"],
+            "notas":          it["notas"],
+            "url_embed":      it["url_embed"],
+            "ref":            it["ref"],
+            "resource_links": it["resource_links"],
         }
 
     # ── IDEAS list ──
@@ -414,7 +539,7 @@ def build_html(items):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IMPULSA · Content Hub</title>
+<title>IMPULSA Suite · Marketing Content Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -443,7 +568,6 @@ a{{text-decoration:none;color:inherit}}
 
 /* CONTROLS */
 .ctrl{{background:{WHITE};border-bottom:1px solid {BORDER};padding:10px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}}
-.ctrl-left{{display:flex;align-items:center;gap:10px}}
 .view-toggle{{display:flex;background:{BG};border:1px solid {BORDER};border-radius:35px;padding:3px;gap:2px}}
 .vbtn{{font-family:'Roboto',sans-serif;font-size:12px;font-weight:500;padding:5px 18px;border-radius:35px;background:transparent;border:none;color:{TEXT2};cursor:pointer;transition:all .15s}}
 .vbtn.active{{background:{PRIMARY};color:{WHITE};font-weight:700;box-shadow:0 2px 6px rgba(5,139,138,.3)}}
@@ -560,6 +684,10 @@ a{{text-decoration:none;color:inherit}}
 .cm-link-btn{{font-size:13px;font-weight:600;color:{WHITE};background:{PRIMARY};border:none;border-radius:35px;padding:11px 32px;transition:all .15s;display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none}}
 .cm-link-btn:hover{{background:#046b6a;box-shadow:0 4px 16px rgba(5,139,138,.35)}}
 .cm-preview-note{{text-align:center;padding:20px;background:{BG};border:2px dashed {BORDER};border-radius:12px;color:{TEXT3};font-size:12px;line-height:1.5}}
+.cm-notes{{font-size:12px;color:{TEXT2};background:{BG};border:1px solid {BORDER};border-radius:10px;padding:10px 14px;line-height:1.55}}
+.cm-res-row{{display:flex;flex-wrap:wrap;gap:8px}}
+.cm-res-btn{{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:9px 18px;border-radius:35px;border:1.5px solid {BORDER};background:{WHITE};color:{TEXT};transition:all .15s;cursor:pointer;text-decoration:none}}
+.cm-res-btn:hover{{border-color:{PRIMARY};color:{PRIMARY};background:{PRIMARY_L};transform:translateY(-1px);box-shadow:0 3px 10px rgba(5,139,138,.15)}}
 
 /* IDEAS PANEL MODAL */
 .id-overlay{{position:fixed;inset:0;background:rgba(4,40,40,.45);z-index:400;display:none;animation:fadein .18s}}
@@ -611,7 +739,7 @@ a{{text-decoration:none;color:inherit}}
     <div class="logo-bar"></div>
     <div>
       <div class="logo-txt">IMPULSA<span> Suite</span></div>
-      <div class="logo-sub">Content Hub</div>
+      <div class="logo-sub">Marketing Content Hub</div>
     </div>
   </div>
   <div class="hdr-r">
@@ -643,19 +771,16 @@ a{{text-decoration:none;color:inherit}}
 
 <!-- CONTROLS -->
 <div class="ctrl">
-  <div class="ctrl-left">
-    <div class="view-toggle">
-      <button class="vbtn active" id="btn-week"  onclick="setView('week')">📅 Semana</button>
-      <button class="vbtn"        id="btn-month" onclick="setView('month')">🗓 Mes</button>
-    </div>
-    <button class="ideas-btn" onclick="openIdeas()">💡 Ideas{ideas_badge}</button>
+  <div class="view-toggle">
+    <button class="vbtn active" id="btn-week"  onclick="setView('week')">📅 Semana</button>
+    <button class="vbtn"        id="btn-month" onclick="setView('month')">🗓 Mes</button>
   </div>
   <div class="period-nav">
     <div class="nav-arr" onclick="prevPeriod()">←</div>
     <div class="plbl" id="plbl"></div>
     <div class="nav-arr" onclick="nextPeriod()">→</div>
   </div>
-  <div style="width:140px"></div>
+  <button class="ideas-btn" onclick="openIdeas()">💡 Ideas{ideas_badge}</button>
 </div>
 
 <!-- FILTERS ROW 1 -->
@@ -936,11 +1061,24 @@ function openCard(cid) {{
     html += `<div class="cm-hashtags">${{tags}}</div>`;
   }}
 
-  if (d.link) {{
-    const lbl = d.macro_estado === 'Publicado' ? '🔗 Ver publicación ↗' : '🔗 Ver enlace ↗';
-    html += `<div class="cm-link-row"><a href="${{d.link}}" target="_blank" rel="noopener" class="cm-link-btn">${{lbl}}</a></div>`;
+  // Notes (copy/caption context)
+  if (d.notas) {{
+    html += `<div class="cm-notes">📋 ${{d.notas}}</div>`;
   }}
 
+  // Resource buttons (Drive folder, stats, published link)
+  const resLinks = (d.resource_links || []);
+  if (d.link && d.link.startsWith('http') && !resLinks.find(r => r.url === d.link)) {{
+    resLinks.push({{label: 'Ver publicación', url: d.link, icon: '🔗'}});
+  }}
+  if (resLinks.length) {{
+    const btns = resLinks.map(r =>
+      `<a href="${{r.url}}" target="_blank" rel="noopener" class="cm-res-btn">${{r.icon}} ${{r.label}} ↗</a>`
+    ).join('');
+    html += `<div class="cm-res-row">${{btns}}</div>`;
+  }}
+
+  // Remove the old single link button block if present (resource_links covers it)
   document.getElementById('cm-content').innerHTML = html;
   document.getElementById('cm-overlay').style.display = '';
   document.getElementById('cardmodal').style.display = 'flex';
@@ -1009,9 +1147,15 @@ showGrid(); updateLabel();
 if __name__ == "__main__":
     import warnings
     warnings.filterwarnings("ignore")
+    creds   = Credentials.from_service_account_file(
+        SA_KEY, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+    service = build("sheets", "v4", credentials=creds)
     print("📥 Leyendo Calendario Editorial...")
-    rows  = read_sheet()
-    items = normalize(rows)
+    rows = read_sheet()
+    print("🔍 Cargando referencias de otras pestañas...")
+    ref_data = load_references(service, SHEET_ID)
+    print(f"   {len(ref_data)} referencias indexadas")
+    items = normalize(rows, ref_data)
     print(f"   {len(items)} piezas cargadas")
     print("🏗️  Generando HTML...")
     html = build_html(items)
