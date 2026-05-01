@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""IMPULSA Content Hub — Generator v4"""
+"""IMPULSA Content Hub — Generator v5"""
 
-import json, calendar as cal_mod
+import json, re, calendar as cal_mod
 from datetime import datetime, timedelta
 from collections import defaultdict
 from google.oauth2.service_account import Credentials
@@ -26,24 +26,49 @@ def parse_fecha(s):
     except:
         return ""
 
+# Maps granular internal states → macro state (for top-level filtering)
+ESTADO_INTERNO_MAP = {
+    "Por redactar":  "En Producción",
+    "Por grabar":    "En Producción",
+    "Por editar":    "En Producción",
+    "Por diseñar":   "En Producción",
+    "Por publicar":  "Programado",
+    "Por presentar": "Programado",
+    "Realizado":     "Publicado",
+    "Publicado":     "Publicado",
+    "Programado":    "Programado",
+    "En Producción": "En Producción",
+    "Borrador":      "En Producción",
+    "Idea":          "Idea",
+    "Cancelado":     "Cancelado",
+}
+
 def normalize(rows):
     items = []
     for r in rows:
         fecha = parse_fecha(r.get("FECHA", ""))
         if not fecha:
             continue
+        estado = r.get("ESTADO", "")
         items.append({
-            "fecha":       fecha,
-            "hora":        r.get("HORA (CLT)", ""),
-            "tipo":        r.get("TIPO", ""),
-            "categoria":   TIPO_TO_CAT.get(r.get("TIPO", ""), "otro"),
-            "plataformas": [p.strip() for p in r.get("PLATAFORMAS", "").split("·") if p.strip()],
-            "titulo":      r.get("TITULO / DESCRIPCIÓN", ""),
-            "estado":      r.get("ESTADO", ""),
-            "link":        r.get("LINK", ""),
-            "responsable": r.get("RESPONSABLE", ""),
+            "fecha":        fecha,
+            "hora":         r.get("HORA (CLT)", ""),
+            "tipo":         r.get("TIPO", ""),
+            "categoria":    TIPO_TO_CAT.get(r.get("TIPO", ""), "otro"),
+            "plataformas":  [p.strip() for p in r.get("PLATAFORMAS", "").split("·") if p.strip()],
+            "titulo":       r.get("TITULO / DESCRIPCIÓN", ""),
+            "estado":       estado,
+            "macro_estado": ESTADO_INTERNO_MAP.get(estado, estado),
+            "link":         r.get("LINK", ""),
+            "responsable":  r.get("RESPONSABLE", ""),
+            "ref":          r.get("REF", ""),
+            "hashtags":     r.get("HASHTAGS", ""),
+            "descripcion":  r.get("DESCRIPCION", ""),
+            "url_embed":    r.get("URL_EMBED", ""),
         })
     items.sort(key=lambda x: (x["fecha"], x["hora"] or "23:59"))
+    for i, item in enumerate(items):
+        item["cid"] = f"c{i}"
     return items
 
 # ── BRAND TOKENS ──────────────────────────────────────────────────────────────
@@ -83,28 +108,39 @@ TIPO_META = {
     "Story":         {"c": "#e1306c", "bg": "#fce8f1"},
     "Evento":        {"c": "#3578aa", "bg": "#e5eef7"},
 }
+
 PLAT_META = {
-    "Instagram":        {"c": "#e1306c", "bg": "#fce8f1", "i": "📸"},
-    "TikTok":           {"c": "#ff0050", "bg": "#ffe5ee", "i": "🎵"},
-    "YouTube":          {"c": "#cc0000", "bg": "#ffe5e5", "i": "▶"},
-    "YouTube Shorts":   {"c": "#cc0000", "bg": "#ffe5e5", "i": "⚡"},
-    "LinkedIn":         {"c": "#0a66c2", "bg": "#e5f0fb", "i": "💼"},
-    "Blog":             {"c": PRIMARY,   "bg": PRIMARY_L, "i": "📝"},
-    "Blog SistemaImpulsa": {"c": PRIMARY, "bg": PRIMARY_L, "i": "📝"},
-    "Blog ImpulsaSuite":   {"c": PRIMARY, "bg": PRIMARY_L, "i": "📝"},
-    "Blog CRMPeru":     {"c": PRIMARY,   "bg": PRIMARY_L, "i": "📝"},
-    "Blog Colombia":    {"c": PRIMARY,   "bg": PRIMARY_L, "i": "📝"},
-    "Email":            {"c": "#d98909", "bg": "#fef3dc", "i": "✉"},
-    "Facebook":         {"c": "#1877f2", "bg": "#e5effe", "i": "📘"},
-    "Twitter":          {"c": "#1da1f2", "bg": "#e5f5fe", "i": "🐦"},
+    "Instagram":           {"c": "#E1306C", "bg": "linear-gradient(135deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)", "icon": "ig"},
+    "TikTok":              {"c": "#000000", "bg": "#000000",  "icon": "tt"},
+    "YouTube":             {"c": "#FF0000", "bg": "#FF0000",  "icon": "yt"},
+    "YouTube Shorts":      {"c": "#FF0000", "bg": "#FF0000",  "icon": "yt"},
+    "LinkedIn":            {"c": "#0A66C2", "bg": "#0A66C2",  "icon": "li"},
+    "Facebook":            {"c": "#1877F2", "bg": "#1877F2",  "icon": "fb"},
+    "Twitter":             {"c": "#000000", "bg": "#14171A",  "icon": "tw"},
+    "Blog":                {"c": PRIMARY,   "bg": PRIMARY,    "icon": "blog"},
+    "Blog SistemaImpulsa": {"c": PRIMARY,   "bg": PRIMARY,    "icon": "blog"},
+    "Blog ImpulsaSuite":   {"c": PRIMARY,   "bg": PRIMARY,    "icon": "blog"},
+    "Blog CRMPeru":        {"c": PRIMARY,   "bg": PRIMARY,    "icon": "blog"},
+    "Blog Colombia":       {"c": PRIMARY,   "bg": PRIMARY,    "icon": "blog"},
+    "Email":               {"c": "#D98909", "bg": "#D98909",  "icon": "email"},
 }
+
 ESTADO_META = {
+    # Macro states
     "Publicado":     {"c": "#1a7a4a", "bg": "#e6f5ed", "d": "#1a7a4a"},
     "Programado":    {"c": "#412f86", "bg": "#ece8f9", "d": "#412f86"},
     "En Producción": {"c": "#b06a00", "bg": "#fef3dc", "d": "#d98909"},
     "Borrador":      {"c": "#646464", "bg": "#f3f3f3", "d": "#999"},
     "Idea":          {"c": "#3578aa", "bg": "#e5eef7", "d": "#3578aa"},
     "Cancelado":     {"c": "#c0392b", "bg": "#fde8e6", "d": "#c0392b"},
+    # Internal granular states
+    "Por redactar":  {"c": "#b06a00", "bg": "#fef3dc", "d": "#d98909"},
+    "Por grabar":    {"c": "#7b3fa0", "bg": "#f0e6f7", "d": "#9b59b6"},
+    "Por editar":    {"c": "#b06a00", "bg": "#fff3e0", "d": "#e67e22"},
+    "Por diseñar":   {"c": "#c0392b", "bg": "#fde8e6", "d": "#e74c3c"},
+    "Por publicar":  {"c": "#412f86", "bg": "#ece8f9", "d": "#412f86"},
+    "Por presentar": {"c": "#412f86", "bg": "#ece8f9", "d": "#412f86"},
+    "Realizado":     {"c": "#1a7a4a", "bg": "#e6f5ed", "d": "#1a7a4a"},
 }
 
 DIAS_ES = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
@@ -114,12 +150,41 @@ MESES_F = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio",
 MESES_S = ["","ene","feb","mar","abr","may","jun",
            "jul","ago","sep","oct","nov","dic"]
 
+# ── SVG SPRITE ────────────────────────────────────────────────────────────────
+
+SVG_ICONS = {
+    "ig":   '<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>',
+    "tt":   '<path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.05a8.16 8.16 0 0 0 4.78 1.52V7.14a4.85 4.85 0 0 1-1.01-.45z"/>',
+    "yt":   '<path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>',
+    "li":   '<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>',
+    "fb":   '<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>',
+    "tw":   '<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>',
+    "blog": '<path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>',
+    "email":'<path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>',
+    "globe":'<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>',
+}
+
+def svg_sprite():
+    parts = ['<svg style="display:none" xmlns="http://www.w3.org/2000/svg">']
+    for k, v in SVG_ICONS.items():
+        parts.append(f'<symbol id="icon-{k}" viewBox="0 0 24 24">{v}</symbol>')
+    parts.append('</svg>')
+    return ''.join(parts)
+
+def plat_icon_svg(icon, size=14):
+    return f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="white"><use href="#icon-{icon}"/></svg>'
+
 # ── BADGES ───────────────────────────────────────────────────────────────────
 
-def plat_dot(name):
-    m = PLAT_META.get(name, {"c": TEXT2, "bg": "#f3f3f3", "i": "🌐"})
-    return (f'<span class="pdot" title="{name}" '
-            f'style="background:{m["bg"]};border:1.5px solid {m["c"]}33">{m["i"]}</span>')
+def plat_dot(name, macro_estado="", link=""):
+    m   = PLAT_META.get(name, {"c": TEXT2, "bg": "#888888", "icon": "globe"})
+    bg  = m.get("bg", "#888888")
+    ico = m.get("icon", "globe")
+    svg = plat_icon_svg(ico)
+    if macro_estado == "Publicado" and link:
+        return (f'<a href="{link}" target="_blank" rel="noopener" class="pdot pdot-link" title="{name} ↗" '
+                f'style="background:{bg}">{svg}</a>')
+    return f'<span class="pdot" title="{name}" style="background:{bg}">{svg}</span>'
 
 def tipo_badge(name):
     if not name: return ""
@@ -135,34 +200,37 @@ def estado_badge(name):
 # ── WEEK CARD ────────────────────────────────────────────────────────────────
 
 def build_card(item):
+    cid   = item.get("cid", "")
     cat   = item["categoria"]
     plats = ", ".join(item["plataformas"])
-    pdots = "".join(plat_dot(p) for p in item["plataformas"])
-    lo    = f'<a href="{item["link"]}" target="_blank" rel="noopener" class="cl">' if item["link"] else '<span class="cl">'
-    lc    = "</a>" if item["link"] else "</span>"
-    arrow = ' <span class="arr">↗</span>' if item["link"] else ""
+    macro = item["macro_estado"]
+    pdots = "".join(plat_dot(p, macro, item["link"]) for p in item["plataformas"])
     hora  = f'<span class="mi">🕐 {item["hora"]} CLT</span>' if item["hora"] else ""
     resp  = f'<span class="mi resp">{item["responsable"]}</span>' if item["responsable"] else ""
-    return (f'<div class="card" data-cat="{cat}" data-plats="{plats}" data-estado="{item["estado"]}">'
+    return (f'<div class="card" data-cat="{cat}" data-plats="{plats}" data-estado="{macro}" '
+            f'onclick="openCard(\'{cid}\')" title="Ver detalle">'
             f'<div class="ct">{tipo_badge(item["tipo"])}{estado_badge(item["estado"])}</div>'
-            f'<div class="ctitle">{lo}{item["titulo"] or "(sin título)"}{arrow}{lc}</div>'
+            f'<div class="ctitle">{item["titulo"] or "(sin título)"}</div>'
             f'<div class="cmeta">{hora}{resp}</div>'
             f'<div class="cplats">{pdots}</div></div>')
 
 # ── MONTH MINI CARD ───────────────────────────────────────────────────────────
 
 def build_mini(item):
+    cid   = item.get("cid", "")
     cat   = item["categoria"]
     plats = ", ".join(item["plataformas"])
     m     = TIPO_META.get(item["tipo"], {"c": TEXT2, "bg": "#f3f3f3"})
+    macro = item["macro_estado"]
     title = (item["titulo"][:34] + "…") if len(item["titulo"]) > 34 else item["titulo"]
     hora  = f' · {item["hora"]}' if item["hora"] else ""
     pdots = "".join(
-        f'<span class="mpdot" title="{p}" style="background:{PLAT_META.get(p,{"bg":"#f3f3f3"})["bg"]}">'
-        f'{PLAT_META.get(p,{"i":"🌐"})["i"]}</span>'
+        f'<span class="mpdot" title="{p}" style="background:{PLAT_META.get(p,{"bg":"#888"})["bg"]}">'
+        f'{plat_icon_svg(PLAT_META.get(p,{"icon":"globe"})["icon"], 9)}</span>'
         for p in item["plataformas"]
     )
-    return (f'<div class="mini" data-cat="{cat}" data-plats="{plats}" data-estado="{item["estado"]}">'
+    return (f'<div class="mini" data-cat="{cat}" data-plats="{plats}" data-estado="{macro}" '
+            f'onclick="openCard(\'{cid}\')">'
             f'<div class="mchip" style="color:{m["c"]};background:{m["bg"]};border-left:3px solid {m["c"]}">'
             f'<span class="mctxt">{title}{hora}</span>'
             f'<span class="mcplats">{pdots}</span>'
@@ -172,11 +240,13 @@ def build_mini(item):
 
 def build_week_grid(items, week_start, grid_id):
     today_s = datetime.now().strftime("%Y-%m-%d")
+    # Exclude Ideas from main grid
+    visible = [x for x in items if x["macro_estado"] != "Idea"]
     cols = []
     for i in range(7):
         d  = week_start + timedelta(days=i)
         ds = d.strftime("%Y-%m-%d")
-        di = [x for x in items if x["fecha"] == ds]
+        di = [x for x in visible if x["fecha"] == ds]
         is_today = ds == today_s
         is_past  = ds < today_s
         cnt_h  = f'<span class="dcnt">{len(di)}</span>' if di else ""
@@ -203,6 +273,7 @@ def week_label(mon_str):
 
 def build_month_grid(items, year, month, grid_id):
     today_s  = datetime.now().strftime("%Y-%m-%d")
+    visible  = [x for x in items if x["macro_estado"] != "Idea"]
     first    = datetime(year, month, 1)
     last_day = cal_mod.monthrange(year, month)[1]
     last     = datetime(year, month, last_day)
@@ -213,7 +284,7 @@ def build_month_grid(items, year, month, grid_id):
     cur   = start
     while cur <= end:
         ds      = cur.strftime("%Y-%m-%d")
-        di      = [x for x in items if x["fecha"] == ds]
+        di      = [x for x in visible if x["fecha"] == ds]
         in_mon  = cur.month == month
         is_today = ds == today_s
         minis   = "".join(build_mini(it) for it in di)
@@ -236,14 +307,15 @@ def build_html(items):
     today_s   = today.strftime("%Y-%m-%d")
     generated = today.strftime("%d/%m/%Y %H:%M")
 
-    # ── Weeks: current ±2 back, +4 forward as baseline ──
+    # ── Weeks ──
     weeks_set = set()
     for it in items:
+        if it["macro_estado"] == "Idea": continue
         d   = datetime.strptime(it["fecha"], "%Y-%m-%d")
         mon = d - timedelta(days=d.weekday())
         weeks_set.add(mon.strftime("%Y-%m-%d"))
     cur_mon = today - timedelta(days=today.weekday())
-    for offset in range(-2, 5):    # -2 past weeks, current, +4 future
+    for offset in range(-2, 5):
         w = cur_mon + timedelta(weeks=offset)
         weeks_set.add(w.strftime("%Y-%m-%d"))
     weeks = sorted(weeks_set)
@@ -254,9 +326,10 @@ def build_html(items):
     week_labels = [week_label(w) for w in weeks]
     week_ids    = [f"wk-{i}" for i in range(len(weeks))]
 
-    # ── Months: current ±1 as baseline ──
+    # ── Months ──
     months_set = set()
     for it in items:
+        if it["macro_estado"] == "Idea": continue
         d = datetime.strptime(it["fecha"], "%Y-%m-%d")
         months_set.add((d.year, d.month))
     for offset in range(-1, 3):
@@ -273,30 +346,68 @@ def build_html(items):
     month_labels = [f"{MESES_F[m]} {y}" for y, m in months]
     month_ids    = [f"mo-{i}" for i in range(len(months))]
 
-    # ── DAY_CARDS dict for day view modal ──
+    # ── DAY_CARDS (excludes Ideas) ──
     day_map = defaultdict(list)
     for it in items:
-        day_map[it["fecha"]].append(build_card(it))
+        if it["macro_estado"] != "Idea":
+            day_map[it["fecha"]].append(build_card(it))
     day_cards_json = {k: "".join(v) for k, v in day_map.items()}
 
-    # ── Stats (current week) ──
+    # ── CARD_DATA for rich modal ──
+    card_data = {}
+    for it in items:
+        card_data[it["cid"]] = {
+            "titulo":       it["titulo"],
+            "tipo":         it["tipo"],
+            "categoria":    it["categoria"],
+            "estado":       it["estado"],
+            "macro_estado": it["macro_estado"],
+            "fecha":        it["fecha"],
+            "hora":         it["hora"],
+            "responsable":  it["responsable"],
+            "link":         it["link"],
+            "plataformas":  it["plataformas"],
+            "hashtags":     it["hashtags"],
+            "descripcion":  it["descripcion"],
+            "url_embed":    it["url_embed"],
+            "ref":          it["ref"],
+        }
+
+    # ── IDEAS list ──
+    ideas = [it for it in items if it["macro_estado"] == "Idea"]
+    ideas_json = [{"cid": it["cid"], "titulo": it["titulo"], "tipo": it["tipo"],
+                   "fecha": it["fecha"], "descripcion": it["descripcion"],
+                   "ref": it["ref"], "responsable": it["responsable"]} for it in ideas]
+
+    # ── Stats (current week, excluding Ideas) ──
     wk_items   = [it for it in items
-                  if abs((datetime.strptime(it["fecha"], "%Y-%m-%d") - cur_mon).days) < 7]
-    published  = sum(1 for it in wk_items if it["estado"] == "Publicado")
-    scheduled  = sum(1 for it in wk_items if it["estado"] == "Programado")
-    production = sum(1 for it in wk_items if it["estado"] == "En Producción")
+                  if it["macro_estado"] != "Idea" and
+                  abs((datetime.strptime(it["fecha"], "%Y-%m-%d") - cur_mon).days) < 7]
+    published  = sum(1 for it in wk_items if it["macro_estado"] == "Publicado")
+    scheduled  = sum(1 for it in wk_items if it["macro_estado"] == "Programado")
+    production = sum(1 for it in wk_items if it["macro_estado"] == "En Producción")
+    ideas_count = len(ideas)
 
     # ── Platform sub-filter options ──
-    video_plats = sorted({p for it in items if it["categoria"] == "video" for p in it["plataformas"]})
-    pub_plats   = sorted({p for it in items if it["categoria"] == "publicacion" for p in it["plataformas"]})
+    visible_items = [it for it in items if it["macro_estado"] != "Idea"]
+    video_plats = sorted({p for it in visible_items if it["categoria"] == "video" for p in it["plataformas"]})
+    pub_plats   = sorted({p for it in visible_items if it["categoria"] == "publicacion" for p in it["plataformas"]})
     if not video_plats: video_plats = ["Instagram", "TikTok", "YouTube", "YouTube Shorts"]
     if not pub_plats:   pub_plats   = ["Instagram", "TikTok", "LinkedIn", "Facebook"]
 
-    def pfbtn(p): return (f'<button class="filter-btn" data-fp onclick="filterPlat(\'{p}\',this)">'
-                          f'{PLAT_META.get(p,{}).get("i","🌐")} {p}</button>')
+    def pfbtn(p):
+        m   = PLAT_META.get(p, {"bg": "#888", "icon": "globe"})
+        dot = (f'<span style="display:inline-flex;align-items:center;justify-content:center;'
+               f'width:16px;height:16px;border-radius:50%;background:{m["bg"]};flex-shrink:0">'
+               f'{plat_icon_svg(m["icon"], 9)}</span>')
+        return (f'<button class="filter-btn" data-fp onclick="filterPlat(\'{p}\',this)">'
+                f'<span style="display:inline-flex;align-items:center;gap:5px">{dot}{p}</span></button>')
 
     vp_btns = "\n".join(pfbtn(p) for p in video_plats)
     pp_btns = "\n".join(pfbtn(p) for p in pub_plats)
+
+    plat_cfg_js   = {n: {"bg": m["bg"], "icon": m["icon"]} for n, m in PLAT_META.items()}
+    ideas_badge   = (f'<span class="ideas-count">{ideas_count}</span>' if ideas_count else "")
 
     return f"""<!DOCTYPE html>
 <html lang="es">
@@ -332,9 +443,13 @@ a{{text-decoration:none;color:inherit}}
 
 /* CONTROLS */
 .ctrl{{background:{WHITE};border-bottom:1px solid {BORDER};padding:10px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}}
+.ctrl-left{{display:flex;align-items:center;gap:10px}}
 .view-toggle{{display:flex;background:{BG};border:1px solid {BORDER};border-radius:35px;padding:3px;gap:2px}}
 .vbtn{{font-family:'Roboto',sans-serif;font-size:12px;font-weight:500;padding:5px 18px;border-radius:35px;background:transparent;border:none;color:{TEXT2};cursor:pointer;transition:all .15s}}
 .vbtn.active{{background:{PRIMARY};color:{WHITE};font-weight:700;box-shadow:0 2px 6px rgba(5,139,138,.3)}}
+.ideas-btn{{display:inline-flex;align-items:center;gap:7px;font-family:'Roboto',sans-serif;font-size:12px;font-weight:600;padding:6px 16px;border-radius:35px;background:#fef3dc;border:1.5px solid #f0d080;color:#b06a00;cursor:pointer;transition:all .15s;position:relative}}
+.ideas-btn:hover{{background:#f5e5a0;border-color:#d4a820}}
+.ideas-count{{background:#d98909;color:{WHITE};border-radius:20px;font-size:10px;font-weight:700;padding:1px 7px;line-height:1.4}}
 .period-nav{{display:flex;align-items:center;gap:10px}}
 .nav-arr{{background:{PRIMARY_L};border:1px solid {BORDER};color:{PRIMARY};border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s;user-select:none;flex-shrink:0}}
 .nav-arr:hover{{background:{PRIMARY};color:{WHITE}}}
@@ -374,18 +489,18 @@ a{{text-decoration:none;color:inherit}}
 .eday{{flex:1;display:flex;align-items:center;justify-content:center;color:{TEXT3};font-size:11px;border:1.5px dashed {BORDER};border-radius:9px;padding:16px 0;margin:2px 0}}
 
 /* WEEK CARD */
-.card{{background:{BG};border:1px solid {BORDER};border-radius:10px;padding:9px 10px;transition:all .15s}}
-.card:hover{{box-shadow:{SH_H};transform:translateY(-1px);background:{WHITE};border-color:{PRIMARY}33}}
+.card{{background:{BG};border:1px solid {BORDER};border-radius:10px;padding:9px 10px;transition:all .15s;cursor:pointer}}
+.card:hover{{box-shadow:{SH_H};transform:translateY(-1px);background:{WHITE};border-color:{PRIMARY}55}}
 .ct{{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}}
 .ctitle{{font-size:12px;font-weight:500;color:{TEXT};line-height:1.4;margin-bottom:6px}}
-.cl{{color:{TEXT}}} .cl:hover{{color:{PRIMARY}}}
-.arr{{font-size:10px;color:{PRIMARY};margin-left:2px}}
 .cmeta{{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}}
 .mi{{font-size:10px;color:{TEXT3};background:{WHITE};border:1px solid {BORDER};border-radius:20px;padding:1px 7px}}
 .resp{{color:{TEXT2};font-weight:500}}
 .cplats{{display:flex;flex-wrap:wrap;gap:5px}}
-.pdot{{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:13px;cursor:default;transition:transform .15s,box-shadow .15s}}
-.pdot:hover{{transform:scale(1.18);box-shadow:0 2px 8px rgba(0,0,0,.12)}}
+.pdot{{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;cursor:default;transition:transform .15s,box-shadow .15s}}
+.pdot:hover{{transform:scale(1.15);box-shadow:0 2px 8px rgba(0,0,0,.15)}}
+.pdot-link{{cursor:pointer}}
+.pdot-link:hover{{transform:scale(1.2);box-shadow:0 3px 12px rgba(0,0,0,.22)}}
 
 /* BADGES */
 .badge{{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;border-radius:20px;padding:2px 8px;white-space:nowrap}}
@@ -409,7 +524,7 @@ a{{text-decoration:none;color:inherit}}
 .mchip:hover{{opacity:.8}}
 .mctxt{{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}}
 .mcplats{{display:flex;gap:2px;flex-shrink:0}}
-.mpdot{{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;font-size:9px}}
+.mpdot{{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%}}
 
 /* DAY VIEW MODAL */
 .overlay{{position:fixed;inset:0;background:rgba(4,40,40,.45);z-index:200;animation:fadein .18s;display:none}}
@@ -423,6 +538,47 @@ a{{text-decoration:none;color:inherit}}
 .dm-empty{{text-align:center;color:{TEXT3};padding:44px 16px}}
 .dm-empty div{{font-size:32px;margin-bottom:10px}}
 .dm-empty p{{font-size:13px;color:{TEXT2}}}
+
+/* CARD DETAIL MODAL */
+.cm-overlay{{position:fixed;inset:0;background:rgba(4,40,40,.5);z-index:300;display:none;animation:fadein .18s}}
+.cardmodal{{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:680px;max-width:95vw;max-height:90vh;background:{WHITE};border-radius:18px;overflow:hidden;display:none;flex-direction:column;z-index:301;box-shadow:0 28px 72px rgba(0,0,0,.28);animation:scalein .18s}}
+.cm-hdr{{background:{PRIMARY};color:{WHITE};padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}}
+.cm-hdr-badges{{display:flex;flex-wrap:wrap;gap:6px;flex:1}}
+.cm-title-row{{padding:16px 22px 10px;flex-shrink:0;border-bottom:1px solid {BORDER}}}
+.cm-title-row h2{{font-family:'Poppins',sans-serif;font-size:17px;font-weight:700;color:{TEXT};line-height:1.35}}
+.cm-content{{padding:16px 22px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px}}
+.cm-video{{border-radius:12px;overflow:hidden;background:#000;aspect-ratio:16/9;flex-shrink:0}}
+.cm-video iframe{{width:100%;height:100%;display:block}}
+.cm-meta-grid{{display:flex;flex-wrap:wrap;gap:10px;background:{BG};border:1px solid {BORDER};border-radius:12px;padding:14px 16px}}
+.cm-meta-item{{display:flex;flex-direction:column;gap:4px;min-width:110px}}
+.cm-meta-label{{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:{TEXT3}}}
+.cm-meta-val{{font-size:13px;color:{TEXT};display:flex;align-items:center;gap:5px;flex-wrap:wrap}}
+.cm-desc{{color:{TEXT};font-size:13px;line-height:1.65;background:{BG};border-left:3px solid {PRIMARY};border-radius:0 10px 10px 0;padding:12px 16px}}
+.cm-hashtags{{display:flex;flex-wrap:wrap;gap:6px}}
+.htag{{font-size:12px;font-weight:500;color:{PRIMARY};background:{PRIMARY_L};border:1px solid {BORDER};border-radius:20px;padding:3px 10px}}
+.cm-link-row{{display:flex;justify-content:center;padding-top:4px}}
+.cm-link-btn{{font-size:13px;font-weight:600;color:{WHITE};background:{PRIMARY};border:none;border-radius:35px;padding:11px 32px;transition:all .15s;display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none}}
+.cm-link-btn:hover{{background:#046b6a;box-shadow:0 4px 16px rgba(5,139,138,.35)}}
+.cm-preview-note{{text-align:center;padding:20px;background:{BG};border:2px dashed {BORDER};border-radius:12px;color:{TEXT3};font-size:12px;line-height:1.5}}
+
+/* IDEAS PANEL MODAL */
+.id-overlay{{position:fixed;inset:0;background:rgba(4,40,40,.45);z-index:400;display:none;animation:fadein .18s}}
+.ideasmodal{{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:640px;max-width:95vw;max-height:88vh;background:{WHITE};border-radius:18px;overflow:hidden;display:none;flex-direction:column;z-index:401;box-shadow:0 28px 72px rgba(0,0,0,.26);animation:scalein .18s}}
+.id-hdr{{background:#d98909;color:{WHITE};padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}}
+.id-hdr-txt{{font-family:'Poppins',sans-serif;font-size:16px;font-weight:700}}
+.id-hdr-sub{{font-size:11px;opacity:.8;margin-top:3px}}
+.id-body{{padding:16px 20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px}}
+.id-empty{{text-align:center;padding:48px 16px;color:{TEXT3}}}
+.id-empty div{{font-size:36px;margin-bottom:12px}}
+.id-card{{background:{BG};border:1px solid #f0d080;border-radius:12px;padding:14px 16px;transition:all .15s;cursor:pointer}}
+.id-card:hover{{background:#fefae8;box-shadow:0 4px 16px rgba(217,137,9,.12);transform:translateY(-1px)}}
+.id-card-top{{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}}
+.id-title{{font-size:13px;font-weight:600;color:{TEXT};line-height:1.4;flex:1}}
+.id-meta{{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}}
+.id-pill{{font-size:10px;color:{TEXT3};background:{WHITE};border:1px solid {BORDER};border-radius:20px;padding:2px 8px}}
+.id-desc{{font-size:12px;color:{TEXT2};line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid {BORDER}}}
+.id-ref{{font-size:11px;color:{PRIMARY};margin-top:5px}}
+
 @keyframes fadein{{from{{opacity:0}}to{{opacity:1}}}}
 @keyframes scalein{{from{{opacity:0;transform:translate(-50%,-52%) scale(.96)}}to{{opacity:1;transform:translate(-50%,-50%) scale(1)}}}}
 
@@ -441,11 +597,13 @@ a{{text-decoration:none;color:inherit}}
 @media(max-width:480px){{
   .drow{{grid-template-columns:1fr}}
   .mcells{{grid-template-columns:repeat(2,1fr)}}
-  .daymodal{{width:98vw}}
+  .daymodal,.cardmodal,.ideasmodal{{width:98vw}}
 }}
 </style>
 </head>
 <body>
+
+{svg_sprite()}
 
 <!-- HEADER -->
 <header class="hdr">
@@ -483,11 +641,14 @@ a{{text-decoration:none;color:inherit}}
   </div>
 </div>
 
-<!-- CONTROLS: view + period nav -->
+<!-- CONTROLS -->
 <div class="ctrl">
-  <div class="view-toggle">
-    <button class="vbtn active" id="btn-week"  onclick="setView('week')">📅 Semana</button>
-    <button class="vbtn"        id="btn-month" onclick="setView('month')">🗓 Mes</button>
+  <div class="ctrl-left">
+    <div class="view-toggle">
+      <button class="vbtn active" id="btn-week"  onclick="setView('week')">📅 Semana</button>
+      <button class="vbtn"        id="btn-month" onclick="setView('month')">🗓 Mes</button>
+    </div>
+    <button class="ideas-btn" onclick="openIdeas()">💡 Ideas{ideas_badge}</button>
   </div>
   <div class="period-nav">
     <div class="nav-arr" onclick="prevPeriod()">←</div>
@@ -497,7 +658,7 @@ a{{text-decoration:none;color:inherit}}
   <div style="width:140px"></div>
 </div>
 
-<!-- FILTERS ROW 1: tipo + estado -->
+<!-- FILTERS ROW 1 -->
 <div class="frow">
   <span class="flbl">Contenido:</span>
   <button class="filter-btn active" data-ft onclick="filterTipo('all',this)">Todos</button>
@@ -512,11 +673,9 @@ a{{text-decoration:none;color:inherit}}
   <button class="filter-btn" data-fe onclick="filterEstado('Publicado',this)">✓ Publicado</button>
   <button class="filter-btn" data-fe onclick="filterEstado('Programado',this)">⏱ Programado</button>
   <button class="filter-btn" data-fe onclick="filterEstado('En Producción',this)">⚙ En Producción</button>
-  <button class="filter-btn" data-fe onclick="filterEstado('Borrador',this)">◻ Borrador</button>
-  <button class="filter-btn" data-fe onclick="filterEstado('Idea',this)">💡 Idea</button>
 </div>
 
-<!-- FILTERS ROW 2: plataforma (condicional) -->
+<!-- FILTERS ROW 2 -->
 <div class="sub-frow" id="platrow">
   <span class="flbl">Plataforma:</span>
   <div id="vp" style="display:none;gap:6px;flex-wrap:wrap;align-items:center">
@@ -548,6 +707,30 @@ a{{text-decoration:none;color:inherit}}
   <div class="dm-body" id="dm-body"></div>
 </div>
 
+<!-- CARD DETAIL MODAL -->
+<div class="cm-overlay" id="cm-overlay" onclick="closeCard()"></div>
+<div class="cardmodal" id="cardmodal">
+  <div class="cm-hdr">
+    <div class="cm-hdr-badges" id="cm-badges"></div>
+    <button class="dm-close" onclick="closeCard()">✕</button>
+  </div>
+  <div class="cm-title-row"><h2 id="cm-title"></h2></div>
+  <div class="cm-content" id="cm-content"></div>
+</div>
+
+<!-- IDEAS PANEL MODAL -->
+<div class="id-overlay" id="id-overlay" onclick="closeIdeas()"></div>
+<div class="ideasmodal" id="ideasmodal">
+  <div class="id-hdr">
+    <div>
+      <div class="id-hdr-txt">💡 Banco de Ideas</div>
+      <div class="id-hdr-sub" id="id-hdr-sub"></div>
+    </div>
+    <button class="dm-close" onclick="closeIdeas()">✕</button>
+  </div>
+  <div class="id-body" id="id-body"></div>
+</div>
+
 <!-- FOOTER -->
 <footer class="footer">
   IMPULSA Suite · Content Hub ·
@@ -561,7 +744,12 @@ const wLabels = {json.dumps(week_labels)};
 const mLabels = {json.dumps(month_labels)};
 const wIds    = {json.dumps(week_ids)};
 const mIds    = {json.dumps(month_ids)};
-const DAY_CARDS = {json.dumps(day_cards_json)};
+const DAY_CARDS   = {json.dumps(day_cards_json)};
+const CARD_DATA   = {json.dumps(card_data)};
+const IDEAS_LIST  = {json.dumps(ideas_json)};
+const PLAT_CFG    = {json.dumps(plat_cfg_js)};
+const TIPO_META_JS   = {json.dumps({k: v for k, v in TIPO_META.items()})};
+const ESTADO_META_JS = {json.dumps({k: v for k, v in ESTADO_META.items()})};
 const MESES_F = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_F  = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
@@ -594,12 +782,12 @@ function setView(v) {{
 }}
 
 function prevPeriod() {{
-  if (view==='week'  && wi > 0)             wi--;
-  else if (view==='month' && mi > 0)        mi--;
+  if (view==='week'  && wi > 0)              wi--;
+  else if (view==='month' && mi > 0)         mi--;
   showGrid(); updateLabel();
 }}
 function nextPeriod() {{
-  if (view==='week'  && wi < wIds.length-1) wi++;
+  if (view==='week'  && wi < wIds.length-1)  wi++;
   else if (view==='month' && mi < mIds.length-1) mi++;
   showGrid(); updateLabel();
 }}
@@ -670,7 +858,145 @@ function closeDay() {{
   document.body.style.overflow = '';
 }}
 
-document.addEventListener('keydown', e => {{ if (e.key==='Escape') closeDay(); }});
+// ── CARD DETAIL ───────────────────────────────────────────────────────
+function ytEmbed(url) {{
+  let m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{{11}})/);
+  if (m) return 'https://www.youtube.com/embed/' + m[1] + '?rel=0';
+  m = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{{11}})/);
+  if (m) return 'https://www.youtube.com/embed/' + m[1] + '?rel=0';
+  return null;
+}}
+
+function platDotHTML(name, link, estado) {{
+  const c = PLAT_CFG[name] || {{bg:'#888', icon:'globe'}};
+  const svg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="white"><use href="#icon-${{c.icon}}"/></svg>`;
+  if (link && estado === 'Publicado') {{
+    return `<a href="${{link}}" target="_blank" rel="noopener" class="pdot pdot-link" title="${{name}} ↗" style="background:${{c.bg}}">${{svg}}</a>`;
+  }}
+  return `<span class="pdot" title="${{name}}" style="background:${{c.bg}}">${{svg}}</span>`;
+}}
+
+function tipoBadgeHTML(tipo) {{
+  const m = TIPO_META_JS[tipo] || {{c:'#646464',bg:'#f3f3f3'}};
+  return `<span class="badge tipo-b" style="color:${{m.c}};background:${{m.bg}}">${{tipo}}</span>`;
+}}
+
+function estadoBadgeHTML(estado) {{
+  const m = ESTADO_META_JS[estado] || {{c:'#646464',bg:'#f3f3f3',d:'#999'}};
+  return `<span class="estado-b" style="color:${{m.c}};background:${{m.bg}}"><i style="background:${{m.d}}"></i>${{estado}}</span>`;
+}}
+
+function openCard(cid) {{
+  const d = CARD_DATA[cid];
+  if (!d) return;
+  if (window.event) window.event.stopPropagation();
+
+  document.getElementById('cm-badges').innerHTML =
+    tipoBadgeHTML(d.tipo) + ' ' + estadoBadgeHTML(d.estado);
+  document.getElementById('cm-title').textContent = d.titulo || '(sin título)';
+
+  let html = '';
+  const cat = d.categoria;
+  const embedSrc = d.url_embed || (d.link ? ytEmbed(d.link) : null);
+
+  if (cat === 'video' && embedSrc) {{
+    html += `<div class="cm-video"><iframe src="${{embedSrc}}" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
+  }}
+
+  let metaItems = '';
+  if (d.fecha) {{
+    const parts = d.fecha.split('-');
+    const dd = new Date(+parts[0], +parts[1]-1, +parts[2]);
+    const fechaStr = dd.getDate() + ' de ' + MESES_F[dd.getMonth()+1] + ' ' + dd.getFullYear();
+    metaItems += `<div class="cm-meta-item"><span class="cm-meta-label">Fecha</span><span class="cm-meta-val">${{fechaStr}}${{d.hora?' · '+d.hora+' CLT':''}}</span></div>`;
+  }}
+  if (d.responsable) metaItems += `<div class="cm-meta-item"><span class="cm-meta-label">Responsable</span><span class="cm-meta-val">${{d.responsable}}</span></div>`;
+  if (d.plataformas && d.plataformas.length) {{
+    const dots = d.plataformas.map(p => platDotHTML(p, d.link, d.macro_estado)).join('');
+    metaItems += `<div class="cm-meta-item"><span class="cm-meta-label">Plataformas</span><span class="cm-meta-val"><div class="cplats" style="margin-top:2px">${{dots}}</div></span></div>`;
+  }}
+  if (metaItems) html += `<div class="cm-meta-grid">${{metaItems}}</div>`;
+
+  if (d.descripcion) html += `<div class="cm-desc">${{d.descripcion.replace(/\\n/g,'<br>')}}</div>`;
+
+  if (cat !== 'video' && !d.url_embed) {{
+    const notes = {{
+      articulo:    '📄 Agrega la URL del artículo en <strong>URL_EMBED</strong> del Sheet para ver la previsualización.',
+      email:       '✉️ Agrega el URL o HTML del email en <strong>URL_EMBED</strong> del Sheet.',
+      publicacion: '🖼️ Agrega las URLs de los medios en <strong>URL_EMBED</strong> del Sheet para ver el carrusel.',
+      evento:      '📅 Agrega la URL de la gráfica en <strong>URL_EMBED</strong> del Sheet.',
+    }};
+    const note = notes[cat];
+    if (note) html += `<div class="cm-preview-note">${{note}}</div>`;
+  }}
+
+  if (d.hashtags) {{
+    const tags = d.hashtags.split(/\\s+/).filter(Boolean)
+      .map(h => `<span class="htag">${{h.startsWith('#')?h:'#'+h}}</span>`).join('');
+    html += `<div class="cm-hashtags">${{tags}}</div>`;
+  }}
+
+  if (d.link) {{
+    const lbl = d.macro_estado === 'Publicado' ? '🔗 Ver publicación ↗' : '🔗 Ver enlace ↗';
+    html += `<div class="cm-link-row"><a href="${{d.link}}" target="_blank" rel="noopener" class="cm-link-btn">${{lbl}}</a></div>`;
+  }}
+
+  document.getElementById('cm-content').innerHTML = html;
+  document.getElementById('cm-overlay').style.display = '';
+  document.getElementById('cardmodal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}}
+
+function closeCard() {{
+  document.getElementById('cm-overlay').style.display = 'none';
+  document.getElementById('cardmodal').style.display = 'none';
+  document.body.style.overflow = '';
+}}
+
+// ── IDEAS PANEL ───────────────────────────────────────────────────────
+function openIdeas() {{
+  const ideas = IDEAS_LIST;
+  document.getElementById('id-hdr-sub').textContent =
+    ideas.length ? ideas.length + (ideas.length===1?' idea':' ideas') + ' en el banco' : 'Sin ideas registradas';
+
+  if (!ideas.length) {{
+    document.getElementById('id-body').innerHTML =
+      '<div class="id-empty"><div>💡</div><p>No hay ideas registradas aún.<br>Agrega filas con Estado "Idea" en el Sheet.</p></div>';
+  }} else {{
+    document.getElementById('id-body').innerHTML = ideas.map(idea => {{
+      const tm = TIPO_META_JS[idea.tipo] || {{c:'#646464',bg:'#f3f3f3'}};
+      const tipoBadge = idea.tipo
+        ? `<span class="badge tipo-b" style="color:${{tm.c}};background:${{tm.bg}}">${{idea.tipo}}</span>` : '';
+      const fechaPill = idea.fecha
+        ? `<span class="id-pill">📅 ${{idea.fecha}}</span>` : '';
+      const respPill  = idea.responsable
+        ? `<span class="id-pill">👤 ${{idea.responsable}}</span>` : '';
+      const desc = idea.descripcion
+        ? `<div class="id-desc">${{idea.descripcion}}</div>` : '';
+      const ref  = idea.ref
+        ? `<div class="id-ref">🔗 Referencia: <a href="${{idea.ref.startsWith('http')?idea.ref:'#'}}" target="_blank" style="color:inherit">${{idea.ref}}</a></div>` : '';
+      return `<div class="id-card" onclick="openCard('${{idea.cid}}')" title="Ver detalle">
+        <div class="id-card-top"><span class="id-title">${{idea.titulo||'(sin título)'}}</span>${{tipoBadge}}</div>
+        <div class="id-meta">${{fechaPill}}${{respPill}}</div>
+        ${{desc}}${{ref}}
+      </div>`;
+    }}).join('');
+  }}
+
+  document.getElementById('id-overlay').style.display = '';
+  document.getElementById('ideasmodal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}}
+
+function closeIdeas() {{
+  document.getElementById('id-overlay').style.display = 'none';
+  document.getElementById('ideasmodal').style.display = 'none';
+  document.body.style.overflow = '';
+}}
+
+document.addEventListener('keydown', e => {{
+  if (e.key==='Escape') {{ closeCard(); closeDay(); closeIdeas(); }}
+}});
 
 // Init
 showGrid(); updateLabel();
