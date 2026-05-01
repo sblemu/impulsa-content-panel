@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""IMPULSA Marketing Content Hub — Generator v6"""
+"""IMPULSA Marketing Content Hub — Generator v7"""
 
 import json, re, calendar as cal_mod
 from datetime import datetime, timedelta
@@ -30,118 +30,171 @@ def parse_fecha(s):
 # ── CROSS-REFERENCE LOADING ───────────────────────────────────────────────────
 
 def _norm(s):
-    """Normalize string for fuzzy matching."""
     return re.sub(r"[^a-záéíóúüñ0-9 ]", "", s.lower().strip())
 
 def _words(s):
     return {w for w in _norm(s).split() if len(w) > 4}
 
-def load_references(service, sheet_id):
-    """Read Videos and Newsletters tabs, extract Drive folder URLs from N° col.
-    Returns dict: normalized_title → {type, num, folder_url, stats_url}
-    """
-    refs = {}
+def extract_code(s):
+    """Extract file code like G-075, P-075, V-075 from file/cell name."""
+    m = re.search(r'\[([A-Z]-\d+)', s or "")
+    return m.group(1) if m else None
+
+def _sheet_headers(service, sheet_id, tab_range):
+    """Return a dict of HEADER_NAME → col_index for the first row of a tab."""
+    res = service.spreadsheets().get(
+        spreadsheetId=sheet_id, ranges=[tab_range], includeGridData=True
+    ).execute()
+    row0 = res["sheets"][0]["data"][0].get("rowData", [{}])[0].get("values", [])
+    headers = {}
+    for i, c in enumerate(row0):
+        h = c.get("formattedValue", "").strip()
+        if h:
+            headers[h.upper()] = i
+    return headers, res
+
+def _drive_by_prefix(drive_service, pattern):
+    """Return dict of code → webViewLink for all Drive files matching name pattern."""
+    out = {}
     try:
-        # ── Videos tab (N°=colA, TEMA=colE) ──
-        res = service.spreadsheets().get(
-            spreadsheetId=sheet_id,
-            ranges=["Videos!A:E"],
-            includeGridData=True
-        ).execute()
+        page_token = None
+        while True:
+            resp = drive_service.files().list(
+                q=f"name contains '{pattern}'",
+                fields="nextPageToken,files(id,name,webViewLink)",
+                pageSize=1000, supportsAllDrives=True,
+                includeItemsFromAllDrives=True, corpora="allDrives",
+                pageToken=page_token
+            ).execute()
+            for f in resp.get("files", []):
+                code = extract_code(f["name"])
+                if code:
+                    url = f.get("webViewLink") or f"https://drive.google.com/file/d/{f['id']}/view"
+                    out[code] = url
+            page_token = resp.get("nextPageToken")
+            if not page_token:
+                break
+    except Exception as e:
+        print(f"   [warn] Drive search '{pattern}': {e}")
+    return out
+
+def load_references(service, drive_service, sheet_id):
+    """Load cross-reference data from Videos, Newsletters and Articulos tabs.
+    Returns {videos:{}, newsletters:{}, articulos:{}} — type-separated.
+    """
+    refs = {"videos": {}, "newsletters": {}, "articulos": {}}
+
+    # ── Bulk Drive file lookups ──────────────────────────────────────────
+    print("   ↳ Buscando archivos en Drive...")
+    guion_urls   = _drive_by_prefix(drive_service, "[G-")
+    portada_urls = _drive_by_prefix(drive_service, "[P-")
+    video_urls   = _drive_by_prefix(drive_service, "[V-")
+    print(f"   ↳ Drive: {len(guion_urls)} guiones · {len(portada_urls)} portadas · {len(video_urls)} videos")
+
+    # ── Videos tab ──────────────────────────────────────────────────────
+    try:
+        headers, res = _sheet_headers(service, sheet_id, "Videos!A:P")
+        tema_col    = headers.get("TEMA", 4)
+        guion_col   = headers.get("GUIÓN", headers.get("GUION", 7))
+        video_col   = headers.get("VIDEO", 9)
+        portada_col = headers.get("PORTADAS", headers.get("PORTADA", 11))
+
         for row in res["sheets"][0]["data"][0].get("rowData", [])[1:]:
             cells = row.get("values", [])
-            if len(cells) < 5: continue
-            folder_url = cells[0].get("hyperlink", "")
-            num        = cells[0].get("formattedValue", "")
-            tema       = cells[4].get("formattedValue", "")
-            if tema and folder_url:
-                refs[_norm(tema)] = {"type": "video", "num": num,
-                                     "folder_url": folder_url, "stats_url": ""}
+            def cv(idx): return cells[idx].get("formattedValue", "") if idx < len(cells) else ""
+            tema = cv(tema_col)
+            if not tema: continue
+            guion_code   = extract_code(cv(guion_col))
+            video_code   = extract_code(cv(video_col))
+            portada_code = extract_code(cv(portada_col))
+            refs["videos"][_norm(tema)] = {
+                "guion_url":   guion_urls.get(guion_code, "")   if guion_code   else "",
+                "video_url":   video_urls.get(video_code, "")   if video_code   else "",
+                "portada_url": portada_urls.get(portada_code,"") if portada_code else "",
+            }
     except Exception as e:
-        print(f"   [warn] Videos refs: {e}")
+        print(f"   [warn] Videos tab: {e}")
+
+    # ── Newsletters tab ──────────────────────────────────────────────────
     try:
-        # ── Newsletters tab (N°=colA, TEMA=colE, ESTADISTICAS=colJ) ──
-        res2 = service.spreadsheets().get(
-            spreadsheetId=sheet_id,
-            ranges=["Newsletters!A:J"],
-            includeGridData=True
-        ).execute()
+        headers, res2 = _sheet_headers(service, sheet_id, "Newsletters!A:J")
+        tema_col = headers.get("TEMA", 4)
         for row in res2["sheets"][0]["data"][0].get("rowData", [])[1:]:
             cells = row.get("values", [])
-            if len(cells) < 5: continue
-            folder_url = cells[0].get("hyperlink", "")
-            num        = cells[0].get("formattedValue", "")
-            tema       = cells[4].get("formattedValue", "")
-            stats_url  = cells[9].get("hyperlink", "") if len(cells) > 9 else ""
+            def cv(idx): return cells[idx].get("formattedValue", "") if idx < len(cells) else ""
+            def lv(idx): return cells[idx].get("hyperlink", "")      if idx < len(cells) else ""
+            tema = cv(tema_col)
+            if not tema: continue
+            folder_url = lv(0)  # N° column hyperlink
             if tema and folder_url:
-                refs[_norm(tema)] = {"type": "newsletter", "num": num,
-                                     "folder_url": folder_url, "stats_url": stats_url}
+                refs["newsletters"][_norm(tema)] = {"folder_url": folder_url}
     except Exception as e:
-        print(f"   [warn] Newsletters refs: {e}")
+        print(f"   [warn] Newsletters tab: {e}")
+
+    # ── Articulos tab ────────────────────────────────────────────────────
     try:
-        # ── Articulos tab (N°=colA, ARTICULO=colI hyperlink, LINK=colK) ──
-        res3 = service.spreadsheets().get(
-            spreadsheetId=sheet_id,
-            ranges=["Articulos!A:K"],
-            includeGridData=True
-        ).execute()
+        headers, res3 = _sheet_headers(service, sheet_id, "Articulos!A:K")
+        tema_col = headers.get("TEMA", 5)
         for row in res3["sheets"][0]["data"][0].get("rowData", [])[1:]:
             cells = row.get("values", [])
-            if len(cells) < 6: continue
-            folder_url = cells[0].get("hyperlink", "")
-            num        = cells[0].get("formattedValue", "")
-            tema       = cells[5].get("formattedValue", "")  # TEMA col F
-            art_url    = cells[8].get("hyperlink", "") if len(cells) > 8 else ""
-            pub_url    = cells[10].get("hyperlink", "") if len(cells) > 10 else ""
-            if tema and (folder_url or art_url):
-                refs[_norm(tema)] = {"type": "articulo", "num": num,
-                                     "folder_url": folder_url or art_url,
-                                     "stats_url": pub_url}
+            def cv(idx): return cells[idx].get("formattedValue", "") if idx < len(cells) else ""
+            def lv(idx): return cells[idx].get("hyperlink", "")      if idx < len(cells) else ""
+            tema = cv(tema_col)
+            if not tema: continue
+            folder_url = lv(0)
+            if tema and folder_url:
+                refs["articulos"][_norm(tema)] = {"folder_url": folder_url}
     except Exception as e:
-        print(f"   [warn] Articulos refs: {e}")
+        print(f"   [warn] Articulos tab: {e}")
+
+    print(f"   ↳ Referencias: {len(refs['videos'])} videos · {len(refs['newsletters'])} newsletters · {len(refs['articulos'])} artículos")
     return refs
 
-def find_ref(titulo, ref_data):
-    """Fuzzy-match a calendar title against the reference index."""
-    if not ref_data or not titulo:
+def find_ref(titulo, sub_refs):
+    """Fuzzy-match a calendar title against a type-specific sub-dict."""
+    if not sub_refs or not titulo:
         return None
     key = _norm(titulo)
-    if key in ref_data:
-        return ref_data[key]
+    if key in sub_refs:
+        return sub_refs[key]
     words_a = _words(titulo)
     best, best_n = None, 0
-    for rkey, rval in ref_data.items():
+    for rkey, rval in sub_refs.items():
         overlap = len(words_a & _words(rkey))
         if overlap >= 3 and overlap > best_n:
             best_n, best = overlap, rval
     return best
 
 def build_resource_links(item, ref_data):
-    """Build list of resource link dicts for a calendar item."""
+    """Build type-aware resource link list for a calendar item."""
     links = []
-    raw_link = item.get("link", "")
-    raw_ref  = item.get("ref", "")
+    cat     = item.get("categoria", "")
+    raw_ref = item.get("ref", "")
 
-    # Direct published URL in LINK column
-    if raw_link and raw_link.startswith("http"):
-        links.append({"label": "Ver publicación", "url": raw_link, "icon": "🔗"})
-
-    # REF column as a URL (Drive folder or doc link)
+    # REF column: if URL, show as Referencia (article/source link)
     if raw_ref and raw_ref.startswith("http"):
-        links.append({"label": "Ver referencia", "url": raw_ref, "icon": "📁"})
+        links.append({"label": "Referencia", "url": raw_ref, "icon": "🔗"})
 
-    # Auto-lookup from other tabs
-    matched = find_ref(item.get("titulo", ""), ref_data)
-    if matched:
-        t   = matched.get("type", "")
-        fol = matched.get("folder_url", "")
-        sta = matched.get("stats_url", "")
-        if fol:
-            icons = {"video": "🎬", "newsletter": "📧", "articulo": "📄"}
-            labels = {"video": "Carpeta del video", "newsletter": "Carpeta newsletter", "articulo": "Carpeta artículo"}
-            links.append({"label": labels.get(t, "Carpeta Drive"), "url": fol, "icon": icons.get(t, "📁")})
-        if sta:
-            links.append({"label": "Estadísticas", "url": sta, "icon": "📊"})
+    if cat == "video":
+        matched = find_ref(item.get("titulo", ""), ref_data.get("videos", {}))
+        if matched:
+            if matched.get("guion_url"):
+                links.append({"label": "Guión",   "url": matched["guion_url"],   "icon": "📝"})
+            if matched.get("portada_url"):
+                links.append({"label": "Portada",  "url": matched["portada_url"], "icon": "🖼️"})
+            if matched.get("video_url"):
+                links.append({"label": "Video",    "url": matched["video_url"],   "icon": "🎬"})
+
+    elif cat == "email":
+        matched = find_ref(item.get("titulo", ""), ref_data.get("newsletters", {}))
+        if matched and matched.get("folder_url"):
+            links.append({"label": "Carpeta newsletter", "url": matched["folder_url"], "icon": "📧"})
+
+    elif cat == "articulo":
+        matched = find_ref(item.get("titulo", ""), ref_data.get("articulos", {}))
+        if matched and matched.get("folder_url"):
+            links.append({"label": "Carpeta artículo", "url": matched["folder_url"], "icon": "📁"})
+
     return links
 
 # Maps granular internal states → macro state (for top-level filtering)
@@ -1147,14 +1200,16 @@ showGrid(); updateLabel();
 if __name__ == "__main__":
     import warnings
     warnings.filterwarnings("ignore")
-    creds   = Credentials.from_service_account_file(
-        SA_KEY, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
-    service = build("sheets", "v4", credentials=creds)
+    creds = Credentials.from_service_account_file(SA_KEY, scopes=[
+        "https://www.googleapis.com/auth/spreadsheets.readonly",
+        "https://www.googleapis.com/auth/drive.readonly",
+    ])
+    service       = build("sheets", "v4", credentials=creds)
+    drive_service = build("drive",  "v3", credentials=creds)
     print("📥 Leyendo Calendario Editorial...")
     rows = read_sheet()
     print("🔍 Cargando referencias de otras pestañas...")
-    ref_data = load_references(service, SHEET_ID)
-    print(f"   {len(ref_data)} referencias indexadas")
+    ref_data = load_references(service, drive_service, SHEET_ID)
     items = normalize(rows, ref_data)
     print(f"   {len(items)} piezas cargadas")
     print("🏗️  Generando HTML...")
