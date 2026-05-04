@@ -35,11 +35,6 @@ def _norm(s):
 def _words(s):
     return {w for w in _norm(s).split() if len(w) > 4}
 
-def extract_code(s):
-    """Extract file code like G-075, P-075, V-075 from file/cell name."""
-    m = re.search(r'\[([A-Z]-\d+)', s or "")
-    return m.group(1) if m else None
-
 def _sheet_headers(service, sheet_id, tab_range):
     """Return a dict of HEADER_NAME → col_index for the first row of a tab."""
     res = service.spreadsheets().get(
@@ -53,67 +48,11 @@ def _sheet_headers(service, sheet_id, tab_range):
             headers[h.upper()] = i
     return headers, res
 
-def _drive_by_prefix(drive_service, pattern):
-    """Return dict of code → webViewLink for all Drive files matching name pattern."""
-    out = {}
-    try:
-        page_token = None
-        while True:
-            resp = drive_service.files().list(
-                q=f"name contains '{pattern}'",
-                fields="nextPageToken,files(id,name,webViewLink)",
-                pageSize=1000, supportsAllDrives=True,
-                includeItemsFromAllDrives=True, corpora="allDrives",
-                pageToken=page_token
-            ).execute()
-            for f in resp.get("files", []):
-                code = extract_code(f["name"])
-                if code:
-                    url = f.get("webViewLink") or f"https://drive.google.com/file/d/{f['id']}/view"
-                    out[code] = url
-            page_token = resp.get("nextPageToken")
-            if not page_token:
-                break
-    except Exception as e:
-        print(f"   [warn] Drive search '{pattern}': {e}")
-    return out
-
-def load_references(service, drive_service, sheet_id):
-    """Load cross-reference data from Videos, Newsletters and Articulos tabs.
-    Returns {videos:{}, newsletters:{}, articulos:{}} — type-separated.
+def load_references(service, sheet_id):
+    """Load cross-reference URLs from Newsletters and Articulos tabs.
+    Returns {newsletters:{}, articulos:{}} — type-separated.
     """
-    refs = {"videos": {}, "newsletters": {}, "articulos": {}}
-
-    # ── Bulk Drive file lookups ──────────────────────────────────────────
-    print("   ↳ Buscando archivos en Drive...")
-    guion_urls   = _drive_by_prefix(drive_service, "[G-")
-    portada_urls = _drive_by_prefix(drive_service, "[P-")
-    video_urls   = _drive_by_prefix(drive_service, "[V-")
-    print(f"   ↳ Drive: {len(guion_urls)} guiones · {len(portada_urls)} portadas · {len(video_urls)} videos")
-
-    # ── Videos tab ──────────────────────────────────────────────────────
-    try:
-        headers, res = _sheet_headers(service, sheet_id, "Videos!A:P")
-        tema_col    = headers.get("TEMA", 4)
-        guion_col   = headers.get("GUIÓN", headers.get("GUION", 7))
-        video_col   = headers.get("VIDEO", 9)
-        portada_col = headers.get("PORTADAS", headers.get("PORTADA", 11))
-
-        for row in res["sheets"][0]["data"][0].get("rowData", [])[1:]:
-            cells = row.get("values", [])
-            def cv(idx): return cells[idx].get("formattedValue", "") if idx < len(cells) else ""
-            tema = cv(tema_col)
-            if not tema: continue
-            guion_code   = extract_code(cv(guion_col))
-            video_code   = extract_code(cv(video_col))
-            portada_code = extract_code(cv(portada_col))
-            refs["videos"][_norm(tema)] = {
-                "guion_url":   guion_urls.get(guion_code, "")   if guion_code   else "",
-                "video_url":   video_urls.get(video_code, "")   if video_code   else "",
-                "portada_url": portada_urls.get(portada_code,"") if portada_code else "",
-            }
-    except Exception as e:
-        print(f"   [warn] Videos tab: {e}")
+    refs = {"newsletters": {}, "articulos": {}}
 
     # ── Newsletters tab ──────────────────────────────────────────────────
     try:
@@ -147,7 +86,7 @@ def load_references(service, drive_service, sheet_id):
     except Exception as e:
         print(f"   [warn] Articulos tab: {e}")
 
-    print(f"   ↳ Referencias: {len(refs['videos'])} videos · {len(refs['newsletters'])} newsletters · {len(refs['articulos'])} artículos")
+    print(f"   ↳ Referencias: {len(refs['newsletters'])} newsletters · {len(refs['articulos'])} artículos")
     return refs
 
 def find_ref(titulo, sub_refs):
@@ -165,37 +104,21 @@ def find_ref(titulo, sub_refs):
             best_n, best = overlap, rval
     return best
 
-def build_resource_links(item, ref_data):
-    """Build type-aware resource link list for a calendar item."""
-    links = []
-    cat     = item.get("categoria", "")
-    raw_ref = item.get("ref", "")
-
-    # REF column: if URL, show as Referencia (article/source link)
-    if raw_ref and raw_ref.startswith("http"):
-        links.append({"label": "Referencia", "url": raw_ref, "icon": "🔗"})
-
-    if cat == "video":
-        matched = find_ref(item.get("titulo", ""), ref_data.get("videos", {}))
-        if matched:
-            if matched.get("guion_url"):
-                links.append({"label": "Guión",   "url": matched["guion_url"],   "icon": "📝"})
-            if matched.get("portada_url"):
-                links.append({"label": "Portada",  "url": matched["portada_url"], "icon": "🖼️"})
-            if matched.get("video_url"):
-                links.append({"label": "Video",    "url": matched["video_url"],   "icon": "🎬"})
-
-    elif cat == "email":
+def get_card_url(item, ref_data):
+    """Return the URL to open when the card is clicked."""
+    cat  = item.get("categoria", "")
+    link = item.get("link", "")
+    if link and link.startswith("http"):
+        return link
+    if cat == "email":
         matched = find_ref(item.get("titulo", ""), ref_data.get("newsletters", {}))
         if matched and matched.get("folder_url"):
-            links.append({"label": "Carpeta newsletter", "url": matched["folder_url"], "icon": "📧"})
-
+            return matched["folder_url"]
     elif cat == "articulo":
         matched = find_ref(item.get("titulo", ""), ref_data.get("articulos", {}))
         if matched and matched.get("folder_url"):
-            links.append({"label": "Carpeta artículo", "url": matched["folder_url"], "icon": "📁"})
-
-    return links
+            return matched["folder_url"]
+    return ""
 
 # Maps granular internal states → macro state (for top-level filtering)
 ESTADO_INTERNO_MAP = {
@@ -240,7 +163,7 @@ def normalize(rows, ref_data=None):
             "descripcion":  r.get("DESCRIPCION", ""),
             "url_embed":    r.get("URL_EMBED", ""),
         }
-        item["resource_links"] = build_resource_links(item, ref_data)
+        item["card_url"] = get_card_url(item, ref_data)
         items.append(item)
     items.sort(key=lambda x: (x["fecha"], x["hora"] or "23:59"))
     for i, item in enumerate(items):
@@ -359,7 +282,7 @@ def plat_dot(name, macro_estado="", link=""):
     svg = plat_icon_svg(ico)
     if macro_estado == "Publicado" and link:
         return (f'<a href="{link}" target="_blank" rel="noopener" class="pdot pdot-link" title="{name} ↗" '
-                f'style="background:{bg}">{svg}</a>')
+                f'onclick="event.stopPropagation()" style="background:{bg}">{svg}</a>')
     return f'<span class="pdot" title="{name}" style="background:{bg}">{svg}</span>'
 
 def tipo_badge(name):
@@ -376,15 +299,15 @@ def estado_badge(name):
 # ── WEEK CARD ────────────────────────────────────────────────────────────────
 
 def build_card(item):
-    cid   = item.get("cid", "")
     cat   = item["categoria"]
     plats = ", ".join(item["plataformas"])
     macro = item["macro_estado"]
     pdots = "".join(plat_dot(p, macro, item["link"]) for p in item["plataformas"])
     hora  = f'<span class="mi">🕐 {item["hora"]} CLT</span>' if item["hora"] else ""
     resp  = f'<span class="mi resp">{item["responsable"]}</span>' if item["responsable"] else ""
-    return (f'<div class="card" data-cat="{cat}" data-plats="{plats}" data-estado="{macro}" '
-            f'onclick="openCard(\'{cid}\')" title="Ver detalle">'
+    url   = item.get("card_url", "")
+    click = f'onclick="window.open(\'{url}\',\'_blank\')" style="cursor:pointer" title="Abrir contenido"' if url else ""
+    return (f'<div class="card" data-cat="{cat}" data-plats="{plats}" data-estado="{macro}" {click}>'
             f'<div class="ct">{tipo_badge(item["tipo"])}{estado_badge(item["estado"])}</div>'
             f'<div class="ctitle">{item["titulo"] or "(sin título)"}</div>'
             f'<div class="cmeta">{hora}{resp}</div>'
@@ -405,8 +328,7 @@ def build_mini(item):
         f'{plat_icon_svg(PLAT_META.get(p,{"icon":"globe"})["icon"], 9)}</span>'
         for p in item["plataformas"]
     )
-    return (f'<div class="mini" data-cat="{cat}" data-plats="{plats}" data-estado="{macro}" '
-            f'onclick="openCard(\'{cid}\')">'
+    return (f'<div class="mini" data-cat="{cat}" data-plats="{plats}" data-estado="{macro}">'
             f'<div class="mchip" style="color:{m["c"]};background:{m["bg"]};border-left:3px solid {m["c"]}">'
             f'<span class="mctxt">{title}{hora}</span>'
             f'<span class="mcplats">{pdots}</span>'
@@ -529,28 +451,6 @@ def build_html(items):
             day_map[it["fecha"]].append(build_card(it))
     day_cards_json = {k: "".join(v) for k, v in day_map.items()}
 
-    # ── CARD_DATA for rich modal ──
-    card_data = {}
-    for it in items:
-        card_data[it["cid"]] = {
-            "titulo":         it["titulo"],
-            "tipo":           it["tipo"],
-            "categoria":      it["categoria"],
-            "estado":         it["estado"],
-            "macro_estado":   it["macro_estado"],
-            "fecha":          it["fecha"],
-            "hora":           it["hora"],
-            "responsable":    it["responsable"],
-            "link":           it["link"],
-            "plataformas":    it["plataformas"],
-            "hashtags":       it["hashtags"],
-            "descripcion":    it["descripcion"],
-            "notas":          it["notas"],
-            "url_embed":      it["url_embed"],
-            "ref":            it["ref"],
-            "resource_links": it["resource_links"],
-        }
-
     # ── IDEAS list ──
     ideas = [it for it in items if it["macro_estado"] == "Idea"]
     ideas_json = [{"cid": it["cid"], "titulo": it["titulo"], "tipo": it["tipo"],
@@ -584,7 +484,6 @@ def build_html(items):
     vp_btns = "\n".join(pfbtn(p) for p in video_plats)
     pp_btns = "\n".join(pfbtn(p) for p in pub_plats)
 
-    plat_cfg_js   = {n: {"bg": m["bg"], "icon": m["icon"]} for n, m in PLAT_META.items()}
     ideas_badge   = (f'<span class="ideas-count">{ideas_count}</span>' if ideas_count else "")
 
     return f"""<!DOCTYPE html>
@@ -716,32 +615,6 @@ a{{text-decoration:none;color:inherit}}
 .dm-empty div{{font-size:32px;margin-bottom:10px}}
 .dm-empty p{{font-size:13px;color:{TEXT2}}}
 
-/* CARD DETAIL MODAL */
-.cm-overlay{{position:fixed;inset:0;background:rgba(4,40,40,.5);z-index:300;display:none;animation:fadein .18s}}
-.cardmodal{{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:680px;max-width:95vw;max-height:90vh;background:{WHITE};border-radius:18px;overflow:hidden;display:none;flex-direction:column;z-index:301;box-shadow:0 28px 72px rgba(0,0,0,.28);animation:scalein .18s}}
-.cm-hdr{{background:{PRIMARY};color:{WHITE};padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}}
-.cm-hdr-badges{{display:flex;flex-wrap:wrap;gap:6px;flex:1}}
-.cm-title-row{{padding:16px 22px 10px;flex-shrink:0;border-bottom:1px solid {BORDER}}}
-.cm-title-row h2{{font-family:'Poppins',sans-serif;font-size:17px;font-weight:700;color:{TEXT};line-height:1.35}}
-.cm-content{{padding:16px 22px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px}}
-.cm-video{{border-radius:12px;overflow:hidden;background:#000;aspect-ratio:16/9;flex-shrink:0}}
-.cm-video iframe{{width:100%;height:100%;display:block}}
-.cm-meta-grid{{display:flex;flex-wrap:wrap;gap:10px;background:{BG};border:1px solid {BORDER};border-radius:12px;padding:14px 16px}}
-.cm-meta-item{{display:flex;flex-direction:column;gap:4px;min-width:110px}}
-.cm-meta-label{{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:{TEXT3}}}
-.cm-meta-val{{font-size:13px;color:{TEXT};display:flex;align-items:center;gap:5px;flex-wrap:wrap}}
-.cm-desc{{color:{TEXT};font-size:13px;line-height:1.65;background:{BG};border-left:3px solid {PRIMARY};border-radius:0 10px 10px 0;padding:12px 16px}}
-.cm-hashtags{{display:flex;flex-wrap:wrap;gap:6px}}
-.htag{{font-size:12px;font-weight:500;color:{PRIMARY};background:{PRIMARY_L};border:1px solid {BORDER};border-radius:20px;padding:3px 10px}}
-.cm-link-row{{display:flex;justify-content:center;padding-top:4px}}
-.cm-link-btn{{font-size:13px;font-weight:600;color:{WHITE};background:{PRIMARY};border:none;border-radius:35px;padding:11px 32px;transition:all .15s;display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none}}
-.cm-link-btn:hover{{background:#046b6a;box-shadow:0 4px 16px rgba(5,139,138,.35)}}
-.cm-preview-note{{text-align:center;padding:20px;background:{BG};border:2px dashed {BORDER};border-radius:12px;color:{TEXT3};font-size:12px;line-height:1.5}}
-.cm-notes{{font-size:12px;color:{TEXT2};background:{BG};border:1px solid {BORDER};border-radius:10px;padding:10px 14px;line-height:1.55}}
-.cm-res-row{{display:flex;flex-wrap:wrap;gap:8px}}
-.cm-res-btn{{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:9px 18px;border-radius:35px;border:1.5px solid {BORDER};background:{WHITE};color:{TEXT};transition:all .15s;cursor:pointer;text-decoration:none}}
-.cm-res-btn:hover{{border-color:{PRIMARY};color:{PRIMARY};background:{PRIMARY_L};transform:translateY(-1px);box-shadow:0 3px 10px rgba(5,139,138,.15)}}
-
 /* IDEAS PANEL MODAL */
 .id-overlay{{position:fixed;inset:0;background:rgba(4,40,40,.45);z-index:400;display:none;animation:fadein .18s}}
 .ideasmodal{{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:640px;max-width:95vw;max-height:88vh;background:{WHITE};border-radius:18px;overflow:hidden;display:none;flex-direction:column;z-index:401;box-shadow:0 28px 72px rgba(0,0,0,.26);animation:scalein .18s}}
@@ -778,7 +651,7 @@ a{{text-decoration:none;color:inherit}}
 @media(max-width:480px){{
   .drow{{grid-template-columns:1fr}}
   .mcells{{grid-template-columns:repeat(2,1fr)}}
-  .daymodal,.cardmodal,.ideasmodal{{width:98vw}}
+  .daymodal,.ideasmodal{{width:98vw}}
 }}
 </style>
 </head>
@@ -799,6 +672,7 @@ a{{text-decoration:none;color:inherit}}
     <span class="upd">Actualizado: {generated}</span>
     <a href="https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit#gid=1371647617"
        target="_blank" class="sheet-btn">📋 Abrir Sheet</a>
+    <a href="/" class="sheet-btn" style="background:#e6f7f7;border-color:#b2e0df;color:#058b8a">🏠 Hub</a>
   </div>
 </header>
 
@@ -885,16 +759,6 @@ a{{text-decoration:none;color:inherit}}
   <div class="dm-body" id="dm-body"></div>
 </div>
 
-<!-- CARD DETAIL MODAL -->
-<div class="cm-overlay" id="cm-overlay" onclick="closeCard()"></div>
-<div class="cardmodal" id="cardmodal">
-  <div class="cm-hdr">
-    <div class="cm-hdr-badges" id="cm-badges"></div>
-    <button class="dm-close" onclick="closeCard()">✕</button>
-  </div>
-  <div class="cm-title-row"><h2 id="cm-title"></h2></div>
-  <div class="cm-content" id="cm-content"></div>
-</div>
 
 <!-- IDEAS PANEL MODAL -->
 <div class="id-overlay" id="id-overlay" onclick="closeIdeas()"></div>
@@ -923,11 +787,8 @@ const mLabels = {json.dumps(month_labels)};
 const wIds    = {json.dumps(week_ids)};
 const mIds    = {json.dumps(month_ids)};
 const DAY_CARDS   = {json.dumps(day_cards_json)};
-const CARD_DATA   = {json.dumps(card_data)};
 const IDEAS_LIST  = {json.dumps(ideas_json)};
-const PLAT_CFG    = {json.dumps(plat_cfg_js)};
-const TIPO_META_JS   = {json.dumps({k: v for k, v in TIPO_META.items()})};
-const ESTADO_META_JS = {json.dumps({k: v for k, v in ESTADO_META.items()})};
+const TIPO_META_JS = {json.dumps({k: v for k, v in TIPO_META.items()})};
 const MESES_F = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_F  = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
@@ -1036,114 +897,6 @@ function closeDay() {{
   document.body.style.overflow = '';
 }}
 
-// ── CARD DETAIL ───────────────────────────────────────────────────────
-function ytEmbed(url) {{
-  let m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{{11}})/);
-  if (m) return 'https://www.youtube.com/embed/' + m[1] + '?rel=0';
-  m = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{{11}})/);
-  if (m) return 'https://www.youtube.com/embed/' + m[1] + '?rel=0';
-  return null;
-}}
-
-function platDotHTML(name, link, estado) {{
-  const c = PLAT_CFG[name] || {{bg:'#888', icon:'globe'}};
-  const svg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="white"><use href="#icon-${{c.icon}}"/></svg>`;
-  if (link && estado === 'Publicado') {{
-    return `<a href="${{link}}" target="_blank" rel="noopener" class="pdot pdot-link" title="${{name}} ↗" style="background:${{c.bg}}">${{svg}}</a>`;
-  }}
-  return `<span class="pdot" title="${{name}}" style="background:${{c.bg}}">${{svg}}</span>`;
-}}
-
-function tipoBadgeHTML(tipo) {{
-  const m = TIPO_META_JS[tipo] || {{c:'#646464',bg:'#f3f3f3'}};
-  return `<span class="badge tipo-b" style="color:${{m.c}};background:${{m.bg}}">${{tipo}}</span>`;
-}}
-
-function estadoBadgeHTML(estado) {{
-  const m = ESTADO_META_JS[estado] || {{c:'#646464',bg:'#f3f3f3',d:'#999'}};
-  return `<span class="estado-b" style="color:${{m.c}};background:${{m.bg}}"><i style="background:${{m.d}}"></i>${{estado}}</span>`;
-}}
-
-function openCard(cid) {{
-  const d = CARD_DATA[cid];
-  if (!d) return;
-  if (window.event) window.event.stopPropagation();
-
-  document.getElementById('cm-badges').innerHTML =
-    tipoBadgeHTML(d.tipo) + ' ' + estadoBadgeHTML(d.estado);
-  document.getElementById('cm-title').textContent = d.titulo || '(sin título)';
-
-  let html = '';
-  const cat = d.categoria;
-  const embedSrc = d.url_embed || (d.link ? ytEmbed(d.link) : null);
-
-  if (cat === 'video' && embedSrc) {{
-    html += `<div class="cm-video"><iframe src="${{embedSrc}}" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
-  }}
-
-  let metaItems = '';
-  if (d.fecha) {{
-    const parts = d.fecha.split('-');
-    const dd = new Date(+parts[0], +parts[1]-1, +parts[2]);
-    const fechaStr = dd.getDate() + ' de ' + MESES_F[dd.getMonth()+1] + ' ' + dd.getFullYear();
-    metaItems += `<div class="cm-meta-item"><span class="cm-meta-label">Fecha</span><span class="cm-meta-val">${{fechaStr}}${{d.hora?' · '+d.hora+' CLT':''}}</span></div>`;
-  }}
-  if (d.responsable) metaItems += `<div class="cm-meta-item"><span class="cm-meta-label">Responsable</span><span class="cm-meta-val">${{d.responsable}}</span></div>`;
-  if (d.plataformas && d.plataformas.length) {{
-    const dots = d.plataformas.map(p => platDotHTML(p, d.link, d.macro_estado)).join('');
-    metaItems += `<div class="cm-meta-item"><span class="cm-meta-label">Plataformas</span><span class="cm-meta-val"><div class="cplats" style="margin-top:2px">${{dots}}</div></span></div>`;
-  }}
-  if (metaItems) html += `<div class="cm-meta-grid">${{metaItems}}</div>`;
-
-  if (d.descripcion) html += `<div class="cm-desc">${{d.descripcion.replace(/\\n/g,'<br>')}}</div>`;
-
-  if (cat !== 'video' && !d.url_embed) {{
-    const notes = {{
-      articulo:    '📄 Agrega la URL del artículo en <strong>URL_EMBED</strong> del Sheet para ver la previsualización.',
-      email:       '✉️ Agrega el URL o HTML del email en <strong>URL_EMBED</strong> del Sheet.',
-      publicacion: '🖼️ Agrega las URLs de los medios en <strong>URL_EMBED</strong> del Sheet para ver el carrusel.',
-      evento:      '📅 Agrega la URL de la gráfica en <strong>URL_EMBED</strong> del Sheet.',
-    }};
-    const note = notes[cat];
-    if (note) html += `<div class="cm-preview-note">${{note}}</div>`;
-  }}
-
-  if (d.hashtags) {{
-    const tags = d.hashtags.split(/\\s+/).filter(Boolean)
-      .map(h => `<span class="htag">${{h.startsWith('#')?h:'#'+h}}</span>`).join('');
-    html += `<div class="cm-hashtags">${{tags}}</div>`;
-  }}
-
-  // Notes (copy/caption context)
-  if (d.notas) {{
-    html += `<div class="cm-notes">📋 ${{d.notas}}</div>`;
-  }}
-
-  // Resource buttons (Drive folder, stats, published link)
-  const resLinks = (d.resource_links || []);
-  if (d.link && d.link.startsWith('http') && !resLinks.find(r => r.url === d.link)) {{
-    resLinks.push({{label: 'Ver publicación', url: d.link, icon: '🔗'}});
-  }}
-  if (resLinks.length) {{
-    const btns = resLinks.map(r =>
-      `<a href="${{r.url}}" target="_blank" rel="noopener" class="cm-res-btn">${{r.icon}} ${{r.label}} ↗</a>`
-    ).join('');
-    html += `<div class="cm-res-row">${{btns}}</div>`;
-  }}
-
-  // Remove the old single link button block if present (resource_links covers it)
-  document.getElementById('cm-content').innerHTML = html;
-  document.getElementById('cm-overlay').style.display = '';
-  document.getElementById('cardmodal').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}}
-
-function closeCard() {{
-  document.getElementById('cm-overlay').style.display = 'none';
-  document.getElementById('cardmodal').style.display = 'none';
-  document.body.style.overflow = '';
-}}
-
 // ── IDEAS PANEL ───────────────────────────────────────────────────────
 function openIdeas() {{
   const ideas = IDEAS_LIST;
@@ -1166,7 +919,7 @@ function openIdeas() {{
         ? `<div class="id-desc">${{idea.descripcion}}</div>` : '';
       const ref  = idea.ref
         ? `<div class="id-ref">🔗 Referencia: <a href="${{idea.ref.startsWith('http')?idea.ref:'#'}}" target="_blank" style="color:inherit">${{idea.ref}}</a></div>` : '';
-      return `<div class="id-card" onclick="openCard('${{idea.cid}}')" title="Ver detalle">
+      return `<div class="id-card">
         <div class="id-card-top"><span class="id-title">${{idea.titulo||'(sin título)'}}</span>${{tipoBadge}}</div>
         <div class="id-meta">${{fechaPill}}${{respPill}}</div>
         ${{desc}}${{ref}}
@@ -1186,7 +939,7 @@ function closeIdeas() {{
 }}
 
 document.addEventListener('keydown', e => {{
-  if (e.key==='Escape') {{ closeCard(); closeDay(); closeIdeas(); }}
+  if (e.key==='Escape') {{ closeDay(); closeIdeas(); }}
 }});
 
 // Init
@@ -1202,14 +955,12 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     creds = Credentials.from_service_account_file(SA_KEY, scopes=[
         "https://www.googleapis.com/auth/spreadsheets.readonly",
-        "https://www.googleapis.com/auth/drive.readonly",
     ])
-    service       = build("sheets", "v4", credentials=creds)
-    drive_service = build("drive",  "v3", credentials=creds)
+    service = build("sheets", "v4", credentials=creds)
     print("📥 Leyendo Calendario Editorial...")
     rows = read_sheet()
     print("🔍 Cargando referencias de otras pestañas...")
-    ref_data = load_references(service, drive_service, SHEET_ID)
+    ref_data = load_references(service, SHEET_ID)
     items = normalize(rows, ref_data)
     print(f"   {len(items)} piezas cargadas")
     print("🏗️  Generando HTML...")
@@ -1217,3 +968,14 @@ if __name__ == "__main__":
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         f.write(html)
     print(f"✅ {OUT_FILE} listo ({len(html)//1024}KB)")
+
+    # Copiar al Hub para Vercel
+    try:
+        import shutil
+        from pathlib import Path
+        hub_content = Path(__file__).resolve().parent.parent.parent.parent / 'Hub' / 'public' / 'content'
+        hub_content.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(OUT_FILE, hub_content / 'index.html')
+        print(f"✅ Hub/public/content/index.html actualizado")
+    except Exception as e:
+        print(f"⚠ Hub copy: {e}")
