@@ -48,6 +48,69 @@ def _sheet_headers(service, sheet_id, tab_range):
             headers[h.upper()] = i
     return headers, res
 
+PLAT_FROM_DOMAIN = {
+    "instagram.com": "Instagram",
+    "tiktok.com":    "TikTok",
+    "vm.tiktok.com": "TikTok",
+    "youtube.com":   "YouTube",
+    "youtu.be":      "YouTube",
+}
+
+def _plat_from_uri(uri):
+    """Guess platform name from a URL domain."""
+    for domain, name in PLAT_FROM_DOMAIN.items():
+        if domain in uri:
+            return name
+    return None
+
+def load_video_links(service, sheet_id):
+    """Read Videos tab textFormatRuns to extract per-platform URLs.
+    Returns dict: {video_num_str: {platform_name: url}}
+    e.g. {"058": {"Instagram": "https://...", "TikTok": "https://...", "YouTube": "https://..."}}
+    """
+    links = {}
+    try:
+        res = service.spreadsheets().get(
+            spreadsheetId=sheet_id,
+            ranges=["Videos!A1:M300"],
+            includeGridData=True,
+        ).execute()
+        for sh in res.get("sheets", []):
+            if sh["properties"]["title"] != "Videos":
+                continue
+            rows = sh.get("data", [{}])[0].get("rowData", [])
+            for row in rows[1:]:
+                vals = row.get("values", [])
+                if len(vals) < 13:
+                    continue
+                num_cell  = vals[0]
+                link_cell = vals[12]
+                num = num_cell.get("formattedValue", "").strip().lstrip("0")
+                if not num:
+                    continue
+                tfr = link_cell.get("textFormatRuns", [])
+                fv  = link_cell.get("formattedValue", "")
+                # Single hyperlink cell (older style)
+                hl = link_cell.get("hyperlink", "")
+                plat_urls = {}
+                if tfr:
+                    for run in tfr:
+                        uri = run.get("format", {}).get("link", {}).get("uri", "")
+                        if uri:
+                            p = _plat_from_uri(uri)
+                            if p:
+                                plat_urls[p] = uri
+                elif hl and fv and fv.startswith("http"):
+                    p = _plat_from_uri(hl)
+                    if p:
+                        plat_urls[p] = hl
+                if plat_urls:
+                    links[num] = plat_urls
+    except Exception as e:
+        print(f"   [warn] load_video_links: {e}")
+    print(f"   ↳ Video links: {len(links)} videos con URLs por plataforma")
+    return links
+
 def load_references(service, sheet_id):
     """Load cross-reference URLs from Newsletters and Articulos tabs.
     Returns {newsletters:{}, articulos:{}} — type-separated.
@@ -137,22 +200,27 @@ ESTADO_INTERNO_MAP = {
     "Cancelado":     "Cancelado",
 }
 
-def normalize(rows, ref_data=None):
+_V_NUM_RE = re.compile(r"\[V-(\d+)\]")
+
+def normalize(rows, ref_data=None, video_links=None):
     if ref_data is None:
         ref_data = {}
+    if video_links is None:
+        video_links = {}
     items = []
     for r in rows:
         fecha = parse_fecha(r.get("FECHA", ""))
         if not fecha:
             continue
         estado = r.get("ESTADO", "")
+        titulo = r.get("TITULO / DESCRIPCIÓN", "")
         item = {
             "fecha":        fecha,
             "hora":         r.get("HORA (CLT)", ""),
             "tipo":         r.get("TIPO", ""),
             "categoria":    TIPO_TO_CAT.get(r.get("TIPO", ""), "otro"),
             "plataformas":  [p.strip() for p in r.get("PLATAFORMAS", "").split("·") if p.strip()],
-            "titulo":       r.get("TITULO / DESCRIPCIÓN", ""),
+            "titulo":       titulo,
             "estado":       estado,
             "macro_estado": ESTADO_INTERNO_MAP.get(estado, estado),
             "link":         r.get("LINK", ""),
@@ -162,7 +230,13 @@ def normalize(rows, ref_data=None):
             "hashtags":     r.get("HASHTAGS", ""),
             "descripcion":  r.get("DESCRIPCION", ""),
             "url_embed":    r.get("URL_EMBED", ""),
+            "plat_urls":    {},
         }
+        # Match [V-NNN] in title → per-platform URLs from Videos tab
+        m = _V_NUM_RE.search(titulo)
+        if m:
+            num = str(int(m.group(1)))  # strip leading zeros for dict key
+            item["plat_urls"] = video_links.get(num, {})
         item["card_url"] = get_card_url(item, ref_data)
         items.append(item)
     items.sort(key=lambda x: (x["fecha"], x["hora"] or "23:59"))
@@ -275,13 +349,15 @@ def plat_icon_svg(icon, size=14):
 
 # ── BADGES ───────────────────────────────────────────────────────────────────
 
-def plat_dot(name, macro_estado="", link=""):
+def plat_dot(name, macro_estado="", link="", plat_urls=None):
     m   = PLAT_META.get(name, {"c": TEXT2, "bg": "#888888", "icon": "globe"})
     bg  = m.get("bg", "#888888")
     ico = m.get("icon", "globe")
     svg = plat_icon_svg(ico)
-    if macro_estado == "Publicado" and link:
-        return (f'<a href="{link}" target="_blank" rel="noopener" class="pdot pdot-link" title="{name} ↗" '
+    # Prefer per-platform URL, fall back to generic link
+    url = (plat_urls or {}).get(name, "") or link
+    if macro_estado == "Publicado" and url:
+        return (f'<a href="{url}" target="_blank" rel="noopener" class="pdot pdot-link" title="{name} ↗" '
                 f'onclick="event.stopPropagation()" style="background:{bg}">{svg}</a>')
     return f'<span class="pdot" title="{name}" style="background:{bg}">{svg}</span>'
 
@@ -302,7 +378,8 @@ def build_card(item):
     cat   = item["categoria"]
     plats = ", ".join(item["plataformas"])
     macro = item["macro_estado"]
-    pdots = "".join(plat_dot(p, macro, item["link"]) for p in item["plataformas"])
+    plat_urls = item.get("plat_urls", {})
+    pdots = "".join(plat_dot(p, macro, item["link"], plat_urls) for p in item["plataformas"])
     hora  = f'<span class="mi">🕐 {item["hora"]} CLT</span>' if item["hora"] else ""
     resp  = f'<span class="mi resp">{item["responsable"]}</span>' if item["responsable"] else ""
     url   = item.get("card_url", "")
@@ -961,7 +1038,9 @@ if __name__ == "__main__":
     rows = read_sheet()
     print("🔍 Cargando referencias de otras pestañas...")
     ref_data = load_references(service, SHEET_ID)
-    items = normalize(rows, ref_data)
+    print("🎬 Cargando URLs por plataforma (Videos tab)...")
+    video_links = load_video_links(service, SHEET_ID)
+    items = normalize(rows, ref_data, video_links)
     print(f"   {len(items)} piezas cargadas")
     print("🏗️  Generando HTML...")
     html = build_html(items)
