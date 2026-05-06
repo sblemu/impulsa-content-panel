@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """IMPULSA Marketing Content Hub — Generator v7"""
 
-import json, re, calendar as cal_mod
+import json, re, os, calendar as cal_mod
 from datetime import datetime, timedelta
 from collections import defaultdict
 from google.oauth2.service_account import Credentials
@@ -9,9 +9,9 @@ from googleapiclient.discovery import build
 import gspread
 
 SHEET_ID = "1tp1MRjJU6g6vF5VD78k-xbV6tcSM5XVZb_FQe9HIdIs"
-SA_KEY   = "/Users/sebastian/.config/claude-keys/google-sheets-sa.json"
+SA_KEY   = os.environ.get('GOOGLE_SA_PATH', os.path.expanduser('~/.config/claude-keys/google-sheets-sa.json'))
 TAB_NAME = "Calendario Editorial"
-OUT_FILE = "index.html"
+OUT_FILE = os.environ.get('CONTENT_HUB_OUT', 'index.html')
 
 # ── READ & NORMALIZE ──────────────────────────────────────────────────────────
 
